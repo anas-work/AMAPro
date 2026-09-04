@@ -28,6 +28,7 @@ models/kprpe_adaface.onnx     # 167MB — AdaFace KPRPe recognition model
 *.sqlite3
 data/attendance.db
 data/attendance_captures/
+data/enrolled_photos/
 data/embeddings/
 data/enrollment_reports/
 n_verbose/
@@ -42,6 +43,10 @@ frontend/dist/
 frontend/.vite/
 
 # ── Android build artifacts ───────────────────────────────────────────────────
+android_clientv7/.gradle/
+android_clientv7/app/build/
+android_clientv7/build/
+android_clientv7/local.properties
 android_clientv6/.gradle/
 android_clientv6/app/build/
 android_clientv6/build/

@@ -98,6 +98,15 @@ class CropDispatcher(
                                     track.employeeId = "UNKNOWN"
                                     track.confidence = 0f
                                     track.decision = "UNKNOWN"
+
+                                    scope.launch {
+                                        try {
+                                            apiService.recordUnknown(base64Crop)
+                                        } catch (e: Exception) {
+                                            // Silent handle network retry
+                                        }
+                                    }
+                                    onMatch(track)
                                 }
                             }
                         }

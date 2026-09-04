@@ -136,4 +136,17 @@ class ApiService(val baseUrl: String = "https://amapro--amapro-attendance.modal.
             response.isSuccessful
         }
     }
+
+    suspend fun recordUnknown(cropBase64: String): Boolean = withContext(Dispatchers.IO) {
+        val payload = mapOf("crop_base64" to cropBase64, "full_frame_base64" to cropBase64)
+        val jsonString = gson.toJson(payload)
+        val request = Request.Builder()
+            .url("${baseUrl.trimEnd('/')}/api/record_unknown")
+            .post(jsonString.toRequestBody(jsonType))
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            response.isSuccessful
+        }
+    }
 }

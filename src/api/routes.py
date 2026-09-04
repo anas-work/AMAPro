@@ -35,12 +35,28 @@ async def serve_employee_photo(photo_path: str):
     # Priority 1: Persistent volume for newly enrolled photos
     persisted_path = os.path.join("data/enrolled_photos", base_name)
     if os.path.isfile(persisted_path):
-        return FileResponse(persisted_path, media_type="image/jpeg")
+        return FileResponse(
+            persisted_path,
+            media_type="image/jpeg",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
 
     # Priority 2: Pre-seeded employee photos
     seeded_path = os.path.join("Employees_Photo", base_name)
     if os.path.isfile(seeded_path):
-        return FileResponse(seeded_path, media_type="image/jpeg")
+        return FileResponse(
+            seeded_path,
+            media_type="image/jpeg",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
 
     raise HTTPException(status_code=404, detail="Employee photo not found.")
 

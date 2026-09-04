@@ -280,7 +280,7 @@ class MainActivity : AppCompatActivity() {
         val filtered = when (activeFilter) {
             "CHECK-IN" -> allFeedRecords.filter { it.eventType == "CHECK_IN" || it.eventType == "CHECK-IN" }
             "CHECK-OUT" -> allFeedRecords.filter { it.eventType == "CHECK_OUT" || it.eventType == "CHECK-OUT" }
-            "UNKNOWN" -> allFeedRecords.filter { it.employeeId == "UNKNOWN" || it.name == "UNKNOWN PERSON" }
+            "UNKNOWN" -> allFeedRecords.filter { it.employeeId == "UNKNOWN" || it.name == "UNKNOWN PERSON" || it.eventType == "UNKNOWN" || (it.employeeId != null && it.employeeId.contains("UNKNOWN")) }
             else -> allFeedRecords
         }
         feedAdapter.updateData(filtered)

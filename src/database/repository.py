@@ -1,7 +1,7 @@
 import os
 import datetime
 from typing import Optional, List, Dict, Any
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker, Session
 from src.database.models import Base, EmployeeModel, EnrollmentModel, CameraModel, RecognitionEventModel, AttendanceEventModel, get_ist_now
 
@@ -115,21 +115,59 @@ class AttendanceRepository:
         finally:
             session.close()
 
-    def remove_employee(self, employee_id: str) -> bool:
+    def remove_employee(self, employee_id: str) -> Dict[str, Any]:
         """
-        Removes employee and associated enrollment records from the database.
+        Completely removes employee, associated enrollment records, attendance events,
+        and recognition events from the database.
+        Returns metadata and list of captured frame paths for disk cleanup.
         """
         session = self.get_session()
+        deleted_captures = []
         try:
             clean_id = employee_id.strip()
-            session.query(EnrollmentModel).filter_by(employee_id=clean_id).delete(synchronize_session=False)
-            session.query(EmployeeModel).filter_by(employee_id=clean_id).delete(synchronize_session=False)
+            # 1. Collect and delete attendance events
+            id_patterns = [
+                AttendanceEventModel.employee_id == clean_id,
+                AttendanceEventModel.employee_id.ilike(f"%({clean_id})%"),
+                AttendanceEventModel.employee_id.ilike(f"%{clean_id}%")
+            ]
+            att_events = session.query(AttendanceEventModel).filter(or_(*id_patterns)).all()
+            for evt in att_events:
+                if evt.captured_frame_path:
+                    deleted_captures.append(evt.captured_frame_path)
+            session.query(AttendanceEventModel).filter(or_(*id_patterns)).delete(synchronize_session=False)
+
+            # 2. Delete recognition events
+            rec_patterns = [
+                RecognitionEventModel.employee_id == clean_id,
+                RecognitionEventModel.employee_id.ilike(f"%({clean_id})%"),
+                RecognitionEventModel.employee_id.ilike(f"%{clean_id}%")
+            ]
+            session.query(RecognitionEventModel).filter(or_(*rec_patterns)).delete(synchronize_session=False)
+
+            # 3. Delete enrollment records
+            session.query(EnrollmentModel).filter(
+                or_(EnrollmentModel.employee_id == clean_id, EnrollmentModel.employee_id.ilike(clean_id))
+            ).delete(synchronize_session=False)
+
+            # 4. Delete employee record
+            session.query(EmployeeModel).filter(
+                or_(EmployeeModel.employee_id == clean_id, EmployeeModel.employee_id.ilike(clean_id))
+            ).delete(synchronize_session=False)
+
             session.commit()
-            return True
+            return {
+                "success": True,
+                "deleted_captures": deleted_captures
+            }
         except Exception as e:
             session.rollback()
             print(f"Error removing employee from DB: {e}")
-            return False
+            return {
+                "success": False,
+                "error": str(e),
+                "deleted_captures": []
+            }
         finally:
             session.close()
 
