@@ -17,6 +17,33 @@ def get_pipeline():
         raise HTTPException(status_code=500, detail="Pipeline engine not initialized.")
     return pipeline_instance
 
+@router.get("/photos/{photo_path:path}")
+async def serve_employee_photo(photo_path: str):
+    """
+    Serves employee reference photos strictly from exact filename on disk:
+    1. Exact match in data/enrolled_photos (persistent volume)
+    2. Exact match in Employees_Photo (pre-seeded assets)
+    3. 404 if not found (strictly no fuzzy matching to avoid showing the wrong person)
+    """
+    import os
+    import urllib.parse
+    from fastapi.responses import FileResponse
+
+    cleaned_path = urllib.parse.unquote(photo_path)
+    base_name = os.path.basename(cleaned_path)
+
+    # Priority 1: Persistent volume for newly enrolled photos
+    persisted_path = os.path.join("data/enrolled_photos", base_name)
+    if os.path.isfile(persisted_path):
+        return FileResponse(persisted_path, media_type="image/jpeg")
+
+    # Priority 2: Pre-seeded employee photos
+    seeded_path = os.path.join("Employees_Photo", base_name)
+    if os.path.isfile(seeded_path):
+        return FileResponse(seeded_path, media_type="image/jpeg")
+
+    raise HTTPException(status_code=404, detail="Employee photo not found.")
+
 @router.get("/api/status")
 async def get_system_status():
     pipeline = get_pipeline()

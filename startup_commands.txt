@@ -1,230 +1,40 @@
 ================================================================================
-  AI MONK ATTENDANCE SYSTEM — COMPLETE SETUP & COMMAND REFERENCE
-  Real-Time Hybrid Edge Face Recognition & Attendance Monitoring System
-  GitHub: https://github.com/anas-work/ABLBL_Attendance
+  AMAPRO ATTENDANCE SYSTEM — MOBILE APP & MODAL SERVERLESS SETUP GUIDE
 ================================================================================
 
 All commands assume you are in the project root:
-  cd /h3/anas/ABLBL_Attendance
+  cd /h3/anas/AMAPro
 
-================================================================================
-  0. FIRST-TIME SETUP (AFTER CLONING)
-================================================================================
+===============================================================================
+  1. MODAL SERVERLESS BACKEND DEPLOYMENT
+===============================================================================
 
-# Step 0a: Download the AdaFace model (NOT included in repo — 167MB)
-#   Place it at: models/kprpe_adaface.onnx
-#   Option A: Copy from existing server
-scp user@your-server:/path/to/kprpe_adaface.onnx models/
+# Step 1: Deploy to Modal (NVIDIA T4 GPU)
+modal deploy modal_deploy.py
 
-#   Option B: Copy from local backup
-cp /path/to/backup/kprpe_adaface.onnx models/
-
-# Step 0b: Generate SSL certificates (required for browser camera access)
-mkdir -p config
-openssl req -x509 -newkey rsa:4096 -keyout config/ssl.key \
-  -out config/ssl.crt -days 365 -nodes \
-  -subj "/CN=attendance-server"
-
-# Step 0c: Create required data directories
-mkdir -p Employees_Photo data/attendance_captures data/embeddings
-
-# Step 0d: Enroll employee photos (if starting fresh)
-#   Photo naming convention: "Firstname Lastname EMP_ID.jpg"
-#   Place all photos in Employees_Photo/ first, then run:
-PYTHONPATH=. python3 scripts/enroll_employees.py
+# Step 2: Test locally with live reload
+modal serve modal_deploy.py
 
 
-================================================================================
-  1. QUICK START (PRODUCTION — DOCKER COMPOSE)
-================================================================================
+===============================================================================
+  2. ANDROID MOBILE & TABLET APP BUILD
+===============================================================================
 
-# Step 1: Build the React frontend production bundle
-npm run build
+cd android_clientv7
 
-# Step 2: Start all services (PostgreSQL + Recognition Engine, HTTPS port 9001)
-docker compose up -d
+# Build Debug APK
+./gradlew assembleDebug
 
-# Step 3: Open the dashboard
-#   https://localhost:9001
-#   https://<server-ip>:9001   (e.g., https://49.206.228.75:9001)
-#   (Accept the one-time self-signed SSL certificate warning in browser)
-
-# Useful Docker management commands:
-docker compose restart recognition_engine   # Restart after code/config changes
-docker compose logs -f recognition_engine    # View live recognition logs
-docker compose down                          # Stop all services
-docker compose up -d --build                 # Rebuild image + restart
+# Output APK file location:
+# android_clientv7/app/build/outputs/apk/debug/AMAPro_Attendance.apk
 
 
-================================================================================
-  2. LOCAL DEVELOPMENT (WITHOUT DOCKER)
-================================================================================
+===============================================================================
+  3. BATCH ENROLLMENT ON MODAL (OPTIONAL)
+===============================================================================
 
-# --- Backend ---
+# Place photos in Employees_Photo/ (format: "Firstname Lastname EMP_ID.jpg")
+# Run batch enrollment task on Modal T4 GPU:
+modal run modal_deploy.py::enroll_all_employees
 
-# Install Python dependencies (use a virtualenv if preferred)
-pip3 install -r requirements.txt
-
-# Run backend with HTTPS (SSL needed for browser getUserMedia)
-PYTHONPATH=. python3 -m uvicorn src.api.app:app \
-  --host 0.0.0.0 --port 9001 \
-  --ssl-keyfile config/ssl.key \
-  --ssl-certfile config/ssl.crt
-
-# Run without HTTPS (HTTP only, camera won't work in browser but API works)
-PYTHONPATH=. python3 -m uvicorn src.api.app:app --host 0.0.0.0 --port 9001
-
-# --- Frontend ---
-
-# Install frontend dependencies
-cd frontend && npm install && cd ..
-
-# Start Vite dev server (hot reloading at http://localhost:3000)
-# API calls are proxied to https://localhost:9001
-npm run dev
-
-# Build production frontend bundle
-npm run build
-
-
-================================================================================
-  3. LIVE CAMERA MODE — HOW IT WORKS
-================================================================================
-
-1. Open https://<server-ip>:9001 in Chrome or Edge.
-2. Click "START LIVE CAPTURE" in the video panel.
-3. Allow camera permission when prompted.
-4. The UltraLight ONNX face detector runs in your browser at ~30 FPS
-   (1/3 frame decimation — inference on every 3rd frame, tracker fills the rest).
-
-Recognition flow for each detected face:
-  a. Face must reach >= 120px (gate trigger) — far-field faces are ignored
-  b. 1-second "settle delay" — person must hold still before sampling starts
-  c. 5 frames are sent to the server at ~600ms intervals over 3 seconds
-  d. Server runs AdaFace embedding + FAISS search on each crop
-  e. First successful match → CHECK_IN (Green box) logged to DB
-  f. Subsequent appearances within cooldown → stays Green, no duplicate
-  g. After cooldown → RE_ENTRY (Orange box) logged
-  h. EXIT MODE → CHECK_OUT (Purple box) logged
-
-State labels shown on the bounding box:
-  APPROACH CAMERA   — face too small (< 120px)
-  HOLD STEADY...    — in settle delay window
-  ANALYZING (x/5)   — sending crops to server
-  Name [Score%]     — matched successfully (Green)
-  RE-ENTRY: Name    — re-entry after cooldown (Orange)
-  CHECK-OUT: Name   — exit recorded (Purple)
-  ⚠️ NOT RECOGNIZED — 5 attempts failed, unknown flagged
-
-
-================================================================================
-  4. ANDROID APP (android_clientv6)
-================================================================================
-
-Requirements:
-  - Android Studio Hedgehog or newer
-  - Android SDK 35 (target), minSdk 26 (Android 8.0+)
-  - Physical device or emulator with camera
-
-Setup:
-  1. Open android_clientv6/ in Android Studio
-  2. Update server IP in:
-       app/src/main/java/com/aimonk/attendance/network/ApiService.kt
-       Change: private const val BASE_URL = "https://YOUR_SERVER_IP:9001/"
-  3. Sync Gradle (uses LiteRT 1.4.0 + CameraX 1.4.0 — 16KB page-size aligned)
-  4. Run on device (API 26+) or emulator
-
-The app uses the same TFLite UltraLight model (version-RFB-320.tflite) bundled
-in assets/ and the same recognition logic as the web app:
-  - 1/3 frame decimation
-  - 1-second settle delay
-  - 5-frame controlled sampling at 600ms intervals
-  - Same state labels and bounding box colors
-
-
-================================================================================
-  5. EMPLOYEE ENROLLMENT
-================================================================================
-
-# Option A: Via Web Dashboard (recommended)
-#   Click "ENROLL" in the top header → Fill name, ID, take/upload photo → Submit
-
-# Option B: Via Android App
-#   Tap "ENROLL" button → Fill name, ID, capture/pick photo → Register Employee
-
-# Option C: CLI Batch Enrollment
-#   1. Place all employee photos in Employees_Photo/
-#   2. Name format MUST be: "Firstname Lastname EMP_ID.jpg"
-#      Example: "Anas Aziz ABL107.jpg"
-#   3. Run:
-PYTHONPATH=. python3 scripts/enroll_employees.py
-
-# Delete an employee via API:
-curl -X DELETE https://localhost:9001/api/employees/ABL107 -k
-
-
-================================================================================
-  6. DATABASE MANAGEMENT (POSTGRESQL)
-================================================================================
-
-# Connect to PostgreSQL inside Docker:
-docker exec -it attendance_postgres psql -U postgres -d attendance_db
-
-# Query recent attendance events:
-docker exec -it attendance_postgres psql -U postgres -d attendance_db \
-  -c "SELECT employee_id, name, event_type, confidence, timestamp FROM attendance_events ORDER BY timestamp DESC LIMIT 20;"
-
-# Count events by type:
-docker exec -it attendance_postgres psql -U postgres -d attendance_db \
-  -c "SELECT event_type, count(*) FROM attendance_events GROUP BY event_type;"
-
-# Clear all attendance events (reset for a new day):
-curl -X POST https://localhost:9001/api/attendance/flush -k
-
-# Switch system mode (ENTRY / EXIT):
-curl -X POST https://localhost:9001/api/mode -k \
-  -H "Content-Type: application/json" -d '{"mode": "EXIT"}'
-
-
-================================================================================
-  7. SYSTEM BENCHMARK & REPORTS
-================================================================================
-
-# Run full pipeline latency & FPS benchmark:
-PYTHONPATH=. python3 scripts/benchmark.py
-
-# Generate PDF Technical Architecture Report:
-python3 scripts/generate_architecture_report_pdf.py
-
-# Build TensorRT engines from ONNX (one-time, GPU-arch specific):
-PYTHONPATH=. python3 scripts/build_engines.py
-
-
-================================================================================
-  8. TROUBLESHOOTING
-================================================================================
-
-Camera doesn't start in browser:
-  → Must use HTTPS. Run with --ssl-keyfile and --ssl-certfile.
-  → On Chrome: navigate to chrome://flags and enable "Insecure origins treated as secure"
-    if using self-signed cert on LAN.
-
-Photos not loading in app:
-  → The Android app uses a custom SSL-trusting OkHttp client — should work with
-    self-signed certs automatically.
-  → Check server IP is reachable from the device (same WiFi / VPN).
-
-AdaFace model not found (server crash on startup):
-  → Download kprpe_adaface.onnx (167MB) and place at models/kprpe_adaface.onnx
-  → The server will fail to start without this file.
-
-16KB page size warning on Android 15:
-  → App uses LiteRT 1.4.0 + CameraX 1.4.0 — these are 16KB page-aligned.
-  → If warning persists, run Clean → Rebuild in Android Studio.
-
-TensorRT engine errors:
-  → Delete old .engine files in models/: rm models/*.engine
-  → Rebuild engines: PYTHONPATH=. python3 scripts/build_engines.py
-  → Engines are GPU-architecture specific — must recompile after hardware change.
-
-================================================================================
+===============================================================================

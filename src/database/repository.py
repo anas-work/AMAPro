@@ -31,18 +31,17 @@ class AttendanceRepository:
             print(f"Warning: Primary DB initialization error ({e}). Falling back to local SQLite...")
             os.makedirs("data", exist_ok=True)
             fallback_url = "sqlite:///data/attendance.db"
-            # Enable WAL journal mode for SQLite: significantly reduces write latency
-            # and allows concurrent reads while writes are in progress.
             self.engine = create_engine(
                 fallback_url,
-                connect_args={"check_same_thread": False},
+                connect_args={"check_same_thread": False, "timeout": 30.0},
             )
-            # Apply PRAGMA WAL mode after engine creation
+            # Apply safe PRAGMAs for network volume persistence: avoid WAL mmap shared memory lock conflicts
             from sqlalchemy import event as sa_event
             @sa_event.listens_for(self.engine, "connect")
-            def set_wal_mode(dbapi_conn, _):
-                dbapi_conn.execute("PRAGMA journal_mode=WAL")
+            def configure_sqlite_connection(dbapi_conn, _):
+                dbapi_conn.execute("PRAGMA journal_mode=DELETE")
                 dbapi_conn.execute("PRAGMA synchronous=NORMAL")
+                dbapi_conn.execute("PRAGMA busy_timeout=10000")
                 dbapi_conn.execute("PRAGMA cache_size=4000")
             Base.metadata.create_all(bind=self.engine)
             self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
@@ -78,6 +77,7 @@ class AttendanceRepository:
     ) -> bool:
         session = self.get_session()
         try:
+            # Upsert EmployeeModel record
             emp = session.query(EmployeeModel).filter_by(employee_id=employee_id).first()
             if not emp:
                 emp = EmployeeModel(
@@ -90,10 +90,14 @@ class AttendanceRepository:
                 )
                 session.add(emp)
             else:
+                # Always update name, department, image_path to latest enrollment
                 emp.name = name
                 emp.department = department
                 emp.updated_at = get_ist_now()
-            
+
+            # Remove stale enrollment records for this ID so image_path is always fresh
+            session.query(EnrollmentModel).filter_by(employee_id=employee_id).delete(synchronize_session=False)
+
             enrollment = EnrollmentModel(
                 employee_id=employee_id,
                 image_path=image_path,

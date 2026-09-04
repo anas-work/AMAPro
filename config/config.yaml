@@ -1,24 +1,11 @@
 hardware:
-  inference_backend: "onnx_trt"  # "onnx_trt" or "tensorrt"
   device: "cuda"                  # "cuda" or "cpu"
   precision: "fp16"               # "fp16" or "fp32"
   device_id: 0
 
-video:
-  source_type: "file"             # "file", "rtsp", "camera"
-                                  # set to "camera" (or pass --live flag / LIVE_MODE=1 env var)
-                                  # to switch from the pre-recorded file to a live camera feed
-  source: "Employees_Video/Live_Feed.mp4"
-  camera_device_id: 0             # USB camera index (0 = first cam) or a GStreamer pipeline string
-  target_fps: 30.0
-  loop: true
-  frame_width: 1280
-  frame_height: 720
-
 detection:
   model_name: "scrfd_2.5g_kps"
   model_path: "models/scrfd_2.5g_kps.onnx"
-  engine_path: "models/scrfd_2.5g_kps.engine"
   confidence_threshold: 0.30
   nms_threshold: 0.4
   input_size: [640, 640]
@@ -26,39 +13,36 @@ detection:
 recognition:
   primary_model: "kprpe_adaface"
   model_path: "models/kprpe_adaface.onnx"
-  engine_path: "models/kprpe_adaface.engine"
-  arcface_fallback_path: "models/arcface_w600k_r50.onnx"
   embedding_size: 512
   input_size: [112, 112]
-  match_threshold: 0.50           # Certain Match Threshold
+  match_threshold: 0.53           # Certain Match Threshold (Production Baseline >= 0.53)
   margin_threshold: 0.04          # Top-1 vs Top-2 Margin Delta Gate
-  unknown_threshold: 0.24         # Below 0.24 is UNKNOWN
+  unknown_threshold: 0.35         # Below 0.35 is UNKNOWN
 
 quality:
-  min_face_size: 50               # Support webcam & mobile distances (>=50px)
-  min_detection_confidence: 0.25
-  min_sharpness: 8.0
-  max_yaw: 60.0
-  max_pitch: 50.0
-  max_roll: 50.0
+  min_face_size: 120              # 120px Gate trigger threshold
+  min_detection_confidence: 0.30
+  min_sharpness: 25.0
+  max_yaw: 55.0
+  max_pitch: 45.0
+  max_roll: 45.0
   min_brightness: 5.0
   max_brightness: 250.0
 
 temporal:
-  confirmation_count: 2           # 2-Frame Temporal Consistency Gate
-  temporal_window_frames: 5
-  min_average_similarity: 0.50    # Match threshold 0.50
-  min_agreement_ratio: 0.4
+  confirmation_count: 3           # 3-Frame Temporal Consensus Gate
+  temporal_window_frames: 10
+  min_average_similarity: 0.48    # Multi-frame consensus minimum similarity
+  min_agreement_ratio: 0.6
 
 attendance:
-  cooldown_seconds: 5             # 5s cooldown for instant activity feed updates
+  cooldown_seconds: 30            # 30-second cooldown for repeat entries
 
 database:
-  url: "postgresql://postgres:postgres@localhost:5432/attendance_db"
+  url: "sqlite:///data/attendance.db"
   sqlite_fallback_url: "sqlite:///data/attendance.db"
 
 storage:
   photos_dir: "Employees_Photo"
-  video_dir: "Employees_Video"
   gallery_dir: "data/embeddings"
   reports_dir: "data/enrollment_reports"

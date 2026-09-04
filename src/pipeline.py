@@ -7,7 +7,6 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple, Optional, Any, Set
 
-from src.video.base import VideoSource
 from src.detection.scrfd_detector import SCRFDDetector, FaceDetection
 from src.tracking.tracker import IoUTracker, TrackedFace
 from src.quality.quality_filter import FaceQualityFilter, QualityResult
@@ -53,7 +52,7 @@ class RecognitionPipeline:
     def __init__(
         self,
         config: Dict[str, Any],
-        video_source: Optional[VideoSource] = None,
+        video_source: Optional[Any] = None,
         db_repo: Optional[AttendanceRepository] = None
     ):
         self.config = config
@@ -115,6 +114,7 @@ class RecognitionPipeline:
         self.employee_photos: Dict[str, np.ndarray] = {}
         self.employee_photo_paths: Dict[str, str] = {}
         self._load_employee_photos(storage_cfg.get("photos_dir", "Employees_Photo"))
+        self._load_employee_photos("data/enrolled_photos")
 
         # Active ID Card Flash state
         self.active_id_card_flash: Optional[Dict[str, Any]] = None
@@ -231,6 +231,78 @@ class RecognitionPipeline:
                 self.employee_photo_paths[fname] = rel_path
                 self.employee_photos[os.path.splitext(fname)[0]] = img
                 self.employee_photo_paths[os.path.splitext(fname)[0]] = rel_path
+
+    def _restore_web_enrolled_employees(self) -> None:
+        """
+        Re-embeds employee photos from data/enrolled_photos that are NOT already
+        present in the FAISS gallery. Called at startup after the baseline FAISS is
+        seeded from the baked container image, so that web-enrolled users survive
+        container restarts and redeployments.
+        """
+        from src.landmarks.alignment import FaceAligner
+
+        enrolled_dir = "data/enrolled_photos"
+        if not os.path.exists(enrolled_dir):
+            return
+
+        # Build a set of employee_ids already in FAISS
+        existing_ids = {e.get("employee_id") for e in self.gallery.get_all_employees()}
+
+        photo_files = glob.glob(os.path.join(enrolled_dir, "*.jpg")) + \
+                      glob.glob(os.path.join(enrolled_dir, "*.jpeg"))
+
+        restored = 0
+        for pfile in photo_files:
+            fname = os.path.basename(pfile)
+            parts = os.path.splitext(fname)[0].split()
+            if len(parts) < 2:
+                continue
+            emp_id = parts[-1].rstrip('.')
+            emp_name = " ".join(parts[:-1])
+
+            if emp_id in existing_ids:
+                # Already in FAISS — just ensure in-memory photo cache is updated
+                rel_path = f"/photos/{fname}"
+                self.employee_photo_paths[emp_id] = rel_path
+                self.employee_photo_paths[fname] = rel_path
+                continue
+
+            # Not in FAISS — re-embed and re-add
+            img = cv2.imread(pfile)
+            if img is None:
+                continue
+            try:
+                detections = self.detector.detect(img)
+                if not detections:
+                    print(f"[Restore] No face in {fname}, skipping.")
+                    continue
+                detections.sort(key=lambda d: d.score, reverse=True)
+                best_det = detections[0]
+                if best_det.kps is None or len(best_det.kps) != 5:
+                    continue
+                aligned_crop, _ = FaceAligner.align_face_112(img, best_det.kps)
+                embedding = self.recognizer.extract_embedding(aligned_crop)
+                metadata = {
+                    "employee_id": emp_id,
+                    "name": emp_name,
+                    "filename": fname,
+                    "image_path": pfile
+                }
+                self.gallery.add_embeddings(np.array([embedding]), [metadata])
+                rel_path = f"/photos/{fname}"
+                self.employee_photo_paths[emp_id] = rel_path
+                self.employee_photo_paths[fname] = rel_path
+                self.employee_photos[emp_id] = img
+                self.employee_photos[fname] = img
+                existing_ids.add(emp_id)
+                restored += 1
+                print(f"[Restore] Re-enrolled {emp_name} ({emp_id}) from persistent volume.")
+            except Exception as err:
+                print(f"[Restore] Failed to re-enroll {fname}: {err}")
+
+        if restored > 0:
+            self.gallery.save()
+            print(f"[Restore] Re-enrolled {restored} web-enrolled employee(s) from persistent volume.")
 
     def process_frame(self, frame: np.ndarray) -> FrameProcessingResult:
         """
@@ -426,8 +498,7 @@ class RecognitionPipeline:
             frame_snapshot = annotated.copy()
             captured_url = f"/captures/{cap_filename}"
             enrolled_url = self.employee_photo_paths.get(new_attendance_event["raw_emp_id"]) or \
-                           self.employee_photo_paths.get(new_attendance_event["name"]) or \
-                           "/photos/" + next(iter(self.employee_photo_paths.keys()), "")
+                           self.employee_photo_paths.get(new_attendance_event["name"]) or None
 
             emp_id_full   = new_attendance_event["employee_id"]
             event_type_db = event_type_str
@@ -637,17 +708,36 @@ class RecognitionPipeline:
 
         # Standard filename matching existing gallery convention
         filename = f"{clean_name} {clean_emp_id}.jpg"
+        
+        # 1. Save to persistent volume directory (survives all Modal restarts/redeployments)
+        persisted_dir = "data/enrolled_photos"
+        os.makedirs(persisted_dir, exist_ok=True)
+        persistent_save_path = os.path.join(persisted_dir, filename)
+        cv2.imwrite(persistent_save_path, img)
+
+        # 2. Save to local photo directory
         photos_dir = self.config.get("storage", {}).get("photos_dir", "Employees_Photo")
         os.makedirs(photos_dir, exist_ok=True)
         save_path = os.path.join(photos_dir, filename)
         cv2.imwrite(save_path, img)
+
+        # Remove any existing FAISS entry for this employee_id before adding the new one.
+        # This prevents duplicate vectors causing wrong-person recognition matches
+        # (e.g., old mirrored enrollment competing with correct new enrollment).
+        try:
+            existing = [e for e in self.gallery.get_all_employees() if e.get("employee_id") == clean_emp_id]
+            if existing:
+                print(f"[Enrollment] Removing {len(existing)} old FAISS vector(s) for {clean_emp_id} before re-enrollment.")
+                self.gallery.remove_employee(clean_emp_id)
+        except Exception as rm_err:
+            print(f"[Enrollment] Warning: could not remove old entry for {clean_emp_id}: {rm_err}")
 
         # Update FAISS gallery
         metadata = {
             "employee_id": clean_emp_id,
             "name": clean_name,
             "filename": filename,
-            "image_path": save_path
+            "image_path": persistent_save_path
         }
         self.gallery.add_embeddings(np.array([embedding]), [metadata])
         self.gallery.save()
@@ -821,6 +911,20 @@ class RecognitionPipeline:
                             pass
                         cv2.imwrite(path, snap, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
 
+                        # Automated Rolling Pruning: keep capture folder capped at max 100 newest files
+                        try:
+                            cap_dir = os.path.dirname(path)
+                            existing_caps = [os.path.join(cap_dir, f) for f in os.listdir(cap_dir) if f.endswith(".jpg")]
+                            if len(existing_caps) > 100:
+                                existing_caps.sort(key=lambda p: os.path.getmtime(p))
+                                for old_f in existing_caps[:len(existing_caps) - 100]:
+                                    try:
+                                        os.remove(old_f)
+                                    except Exception:
+                                        pass
+                        except Exception:
+                            pass
+
                     if self.db_repo:
                         self.db_repo.record_attendance_event(
                             employee_id=emp,
@@ -943,20 +1047,21 @@ class RecognitionPipeline:
             self.employee_photos.pop(emp_name, None)
             self.employee_photo_paths.pop(emp_name, None)
 
-        # 3. Delete physical photo file if exists
+        # 3. Delete physical photo files across persistent and local directories
         photos_dir = self.config.get("storage", {}).get("photos_dir", "Employees_Photo")
+        for pdir in ["data/enrolled_photos", photos_dir]:
+            if fname:
+                fpath = os.path.join(pdir, fname)
+                if os.path.exists(fpath):
+                    try:
+                        os.remove(fpath)
+                    except Exception as e:
+                        print(f"Warning: could not delete file {fpath}: {e}")
         if image_path and os.path.exists(image_path):
             try:
                 os.remove(image_path)
-            except Exception as e:
-                print(f"Warning: could not delete file {image_path}: {e}")
-        elif fname:
-            fpath = os.path.join(photos_dir, fname)
-            if os.path.exists(fpath):
-                try:
-                    os.remove(fpath)
-                except Exception as e:
-                    print(f"Warning: could not delete file {fpath}: {e}")
+            except Exception:
+                pass
 
         # 4. Remove from Database
         if self.db_repo:
@@ -984,9 +1089,22 @@ class RecognitionPipeline:
         if hasattr(self, "deduplicator") and self.deduplicator:
             self.deduplicator.last_recorded.clear()
 
-        print("[Pipeline] Flushed all attendance events and reset live presence counters.")
+        # Clean all disk captures
+        try:
+            cap_dir = "data/attendance_captures"
+            if os.path.exists(cap_dir):
+                for f in os.listdir(cap_dir):
+                    if f.endswith(".jpg"):
+                        try:
+                            os.remove(os.path.join(cap_dir, f))
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+
+        print("[Pipeline] Flushed all attendance events, cleaned captures folder, and reset live presence counters.")
         return {
             "status": "SUCCESS",
             "db_cleared": db_cleared,
-            "message": "All attendance events flushed successfully."
+            "message": "All attendance events and captures cleared successfully."
         }
