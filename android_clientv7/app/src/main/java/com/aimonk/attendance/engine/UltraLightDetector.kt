@@ -46,14 +46,15 @@ class UltraLightDetector(
     init {
         val modelBuffer = loadModelFile(context, "version-RFB-320.tflite")
         val options = Interpreter.Options().apply {
-            setNumThreads(4)
+            setNumThreads(2)
             val compatList = CompatibilityList()
             if (compatList.isDelegateSupportedOnThisDevice) {
                 val delegateOptions = compatList.bestOptionsForThisDevice
                 gpuDelegate = GpuDelegate(delegateOptions)
                 addDelegate(gpuDelegate)
+            } else {
+                useNNAPI = true
             }
-            useNNAPI = true
         }
 
         interpreter = Interpreter(modelBuffer, options)

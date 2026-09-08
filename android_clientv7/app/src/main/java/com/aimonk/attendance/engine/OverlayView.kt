@@ -42,7 +42,7 @@ class OverlayView @JvmOverloads constructor(
     }
 
     private val hudPaint = Paint().apply {
-        color = Color.parseColor("#E00A0F1D")
+        color = COLOR_HUD_BG
         style = Paint.Style.FILL
         isAntiAlias = true
     }
@@ -51,6 +51,27 @@ class OverlayView @JvmOverloads constructor(
         style = Paint.Style.STROKE
         strokeWidth = 3f
         isAntiAlias = true
+    }
+
+    // Pre-allocated drawing objects to guarantee ZERO allocations in onDraw
+    private val hudRect = RectF(16f, 16f, 540f, 180f)
+    private val cardRect = RectF()
+    private val hudTextPaint = Paint().apply {
+        color = Color.WHITE
+        textSize = 24f
+        typeface = Typeface.DEFAULT_BOLD
+        isAntiAlias = true
+    }
+
+    companion object {
+        private const val COLOR_CHECK_OUT = 0xFFD946EF.toInt()      // Purple
+        private const val COLOR_RE_ENTRY = 0xFFF59E0B.toInt()       // Orange
+        private const val COLOR_MATCHED = 0xFF10B981.toInt()        // Green
+        private const val COLOR_NOT_RECOGNIZED = 0xFFEF4444.toInt() // Red
+        private const val COLOR_SETTLING = 0xFFA855F7.toInt()       // Purple Settle
+        private const val COLOR_RECOGNIZING = 0xFF06B6D4.toInt()    // Cyan
+        private const val COLOR_DEFAULT = 0xFF64748B.toInt()        // Slate Gray
+        private const val COLOR_HUD_BG = 0xE00A0F1D.toInt()
     }
 
     fun setSystemMode(mode: String) {
@@ -100,34 +121,34 @@ class OverlayView @JvmOverloads constructor(
                     val scorePct = if (track.confidence > 0f) " [${(track.confidence * 100).roundToInt()}%]" else " [VERIFIED]"
                     when (track.decision) {
                         "CHECK_OUT" -> {
-                            boxColor = Color.parseColor("#D946EF") // Purple
+                            boxColor = COLOR_CHECK_OUT
                             labelText = "CHECK-OUT: ${track.assignedIdentity}$scorePct"
                         }
                         "RE_ENTRY" -> {
-                            boxColor = Color.parseColor("#F59E0B") // Orange
+                            boxColor = COLOR_RE_ENTRY
                             labelText = "RE-ENTRY: ${track.assignedIdentity}$scorePct"
                         }
                         else -> {
-                            boxColor = Color.parseColor("#10B981") // Green
+                            boxColor = COLOR_MATCHED
                             labelText = "${track.assignedIdentity}$scorePct"
                         }
                     }
                 }
                 "NOT_RECOGNIZED" -> {
-                    boxColor = Color.parseColor("#EF4444") // Red
+                    boxColor = COLOR_NOT_RECOGNIZED
                     labelText = "⚠️ NOT RECOGNIZED"
                 }
                 "SETTLING" -> {
-                    boxColor = Color.parseColor("#A855F7") // Purple Settle
+                    boxColor = COLOR_SETTLING
                     labelText = "HOLD STEADY..."
                 }
                 "RECOGNIZING" -> {
-                    boxColor = Color.parseColor("#06B6D4") // Cyan
+                    boxColor = COLOR_RECOGNIZING
                     val attempt = if (track.evalAttempts > 0) " (${track.evalAttempts}/5)" else ""
                     labelText = "ANALYZING$attempt..."
                 }
                 else -> {
-                    boxColor = Color.parseColor("#64748B") // Slate Gray
+                    boxColor = COLOR_DEFAULT
                     labelText = "APPROACH CAMERA"
                 }
             }
@@ -145,12 +166,11 @@ class OverlayView @JvmOverloads constructor(
         }
 
         // 2. Draw Diagnostics HUD (Top Left)
-        val hudRect = RectF(16f, 16f, 540f, 180f)
         canvas.drawRoundRect(hudRect, 14f, 14f, hudPaint)
-        hudBorderPaint.color = if (systemMode == "EXIT") Color.parseColor("#D946EF") else Color.parseColor("#10B981")
+        hudBorderPaint.color = if (systemMode == "EXIT") COLOR_CHECK_OUT else COLOR_MATCHED
         canvas.drawRoundRect(hudRect, 14f, 14f, hudBorderPaint)
 
-        val hudTextPaint = Paint(textPaint).apply { textSize = 24f }
+        hudTextPaint.color = Color.WHITE
         canvas.drawText("MODE: $systemMode | FPS: ${"%.1f".format(telemetry.fps)} | Tracks: ${tracks.size}", 32f, 60f, hudTextPaint)
         canvas.drawText("Detect: ${"%.1f".format(telemetry.detectMs)}ms | Track: ${"%.1f".format(telemetry.trackMs)}ms", 32f, 105f, hudTextPaint)
         canvas.drawText("End-to-End Latency: ${"%.1f".format(telemetry.e2eMs)}ms", 32f, 150f, hudTextPaint)
@@ -160,10 +180,10 @@ class OverlayView @JvmOverloads constructor(
             val popup = activePopupTrack!!
             val cardW = 540f
             val cardH = 170f
-            val cardRect = RectF(width - cardW - 16f, 16f, width - 16f, cardH + 16f)
+            cardRect.set(width - cardW - 16f, 16f, width - 16f, cardH + 16f)
 
             val isUnknown = popup.employeeId == "UNKNOWN"
-            val borderColor = if (isUnknown) Color.parseColor("#EF4444") else Color.parseColor("#10B981")
+            val borderColor = if (isUnknown) COLOR_NOT_RECOGNIZED else COLOR_MATCHED
 
             canvas.drawRoundRect(cardRect, 14f, 14f, hudPaint)
             hudBorderPaint.color = borderColor

@@ -339,8 +339,9 @@ class MainActivity : AppCompatActivity() {
                 it.setSurfaceProvider(binding.previewView.surfaceProvider)
             }
 
-            // 2. ImageAnalysis configured with Camera2 high-speed target FPS
+            // 2. ImageAnalysis configured with Camera2 high-speed target FPS and optimized 640x480 resolution
             val imageAnalysis = ImageAnalysis.Builder()
+                .setTargetResolution(android.util.Size(640, 480))
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .also { builder ->
@@ -357,17 +358,17 @@ class MainActivity : AppCompatActivity() {
                 cameraFrameHeight = imageProxy.height
 
                 if (!isAnalysisBusy) {
-                    isAnalysisBusy = true
-                    val bitmap: Bitmap? = runCatching { imageProxy.toBitmap() }.getOrNull()
+                    // 1/3 Temporal Decimation - evaluate BEFORE heavy Bitmap allocation & YUV conversion
+                    frameDecimationCounter = (frameDecimationCounter + 1) % 3
+                    val isRealKeyframe = (frameDecimationCounter == 0)
 
-                    if (bitmap != null) {
-                        latestCameraBitmap = bitmap
+                    if (isRealKeyframe) {
+                        isAnalysisBusy = true
+                        val bitmap: Bitmap? = runCatching { imageProxy.toBitmap() }.getOrNull()
 
-                        // 1/3 Temporal Decimation (matching web app)
-                        frameDecimationCounter = (frameDecimationCounter + 1) % 3
-                        val isRealKeyframe = (frameDecimationCounter == 0)
+                        if (bitmap != null) {
+                            latestCameraBitmap = bitmap
 
-                        if (isRealKeyframe) {
                             val tDetStart = System.currentTimeMillis()
                             val dets = detector.detect(bitmap, imageProxy.width, imageProxy.height)
                             binding.overlayView.telemetry.detectMs = (System.currentTimeMillis() - tDetStart).toFloat()
@@ -377,10 +378,10 @@ class MainActivity : AppCompatActivity() {
                             binding.overlayView.telemetry.trackMs = (System.currentTimeMillis() - tTrackStart).toFloat()
 
                             dispatcher.evaluateAndDispatch(bitmap, activeTracks, currentSystemMode)
+                            binding.overlayView.telemetry.e2eMs = (System.currentTimeMillis() - tStart).toFloat()
                         }
-                        binding.overlayView.telemetry.e2eMs = (System.currentTimeMillis() - tStart).toFloat()
+                        isAnalysisBusy = false
                     }
-                    isAnalysisBusy = false
                 }
                 imageProxy.close()
             }
