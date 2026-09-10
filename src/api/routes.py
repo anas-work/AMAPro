@@ -63,9 +63,18 @@ async def serve_employee_photo(photo_path: str):
 @router.get("/api/status")
 async def get_system_status():
     pipeline = get_pipeline()
-    from src.video.camera_source import CameraVideoSource
-    is_live = isinstance(pipeline.video_source, CameraVideoSource)
-    total_enrolled = pipeline.gallery.total_vectors
+    is_live = False
+    source_name = pipeline.config.get("video", {}).get("source", "Mobile/Edge Client")
+    try:
+        from src.video.camera_source import CameraVideoSource
+        is_live = isinstance(pipeline.video_source, CameraVideoSource)
+        if is_live and hasattr(pipeline.video_source, "device_id"):
+            source_name = f"camera:{pipeline.video_source.device_id}"
+    except Exception:
+        pass
+
+    enrolled_list = pipeline.gallery.get_all_employees()
+    total_enrolled = max(pipeline.gallery.total_vectors, len(enrolled_list))
     present_set = pipeline.get_present_employees_set()
     present_count = len(present_set)
     absent_count = max(0, total_enrolled - present_count)
@@ -80,11 +89,8 @@ async def get_system_status():
             "unknown_count": unknown_count,
             "frame_count": pipeline.frame_count,
             "active_mode": pipeline.active_mode,
-            "video_source_type": "LIVE_CAMERA" if is_live else "FILE",
-            "source": (
-                f"camera:{pipeline.video_source.device_id}" if is_live
-                else pipeline.config.get("video", {}).get("source", "Employees_Video/Live_Feed.mp4")
-            ),
+            "video_source_type": "LIVE_CAMERA" if is_live else "MOBILE_CLIENT",
+            "source": source_name,
         },
         headers={
             "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",

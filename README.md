@@ -11,9 +11,9 @@
 ## 🌟 Key Architecture & Highlights
 
 ### 1. Mobile & Tablet Native App (`android_clientv7`)
-- **Ultra-Light ONNX Face Detection**: Runs local client-side face detection directly on device via WebAssembly/Android NNAPI in **8–10 ms** per frame.
-- **Proximity-Aware Motion Tracking**: Smooth 60 FPS motion extrapolation, bounding box jitter filtering, and 120px camera gate trigger.
-- **Responsive Mobile & Tablet UI**: Modern dark-mode interface designed for Android smartphones, wall-mounted tablets, and kiosk devices.
+- **Ultra-Light LiteRT Face Detection**: Runs local client-side face detection directly on device via Google LiteRT 1.4.0 (GPU Delegate + NNAPI) in **1.5–3 ms** per frame with 70% confidence filtering.
+- **Proximity-Aware Motion Tracking**: Smooth 60 FPS motion extrapolation, dead-zone bounding box jitter filtering, aspect-preserving `fillCenter` alignment, and aggressive 70px camera gate trigger.
+- **Responsive Mobile & Tablet UI**: Modern dark-mode interface designed for Android smartphones, wall-mounted tablets, and kiosk devices with wide proportional enrollment dialogs.
 
 ### 2. Modal Cloud GPU Backend (`modal_deploy.py`)
 - **Serverless NVIDIA T4 GPU**: Scalable, pay-per-second GPU execution for 512-d AdaFace embedding extraction and FAISS vector matching.

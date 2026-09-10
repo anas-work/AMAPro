@@ -6,35 +6,35 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="6dp"
     app:cardBackgroundColor="@color/bg_card"
-    app:cardCornerRadius="10dp"
+    app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
-    app:strokeColor="@color/border_subtle"
+    app:strokeColor="@color/border_color"
     app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp">
+        android:padding="12dp">
 
-        <!-- Photo thumbnail (rounded) -->
+        <!-- Photo Thumbnail (Circular with outline) -->
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imgPhoto"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:scaleType="centerCrop"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-            app:strokeColor="@color/accent_green"
-            app:strokeWidth="2dp" />
+            app:strokeColor="@color/border_subtle"
+            app:strokeWidth="1.5dp" />
 
         <!-- Name -->
         <TextView
             android:id="@+id/tvName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="12dp"
             android:layout_marginEnd="8dp"
             android:ellipsize="end"
             android:maxLines="1"
@@ -50,8 +50,8 @@
             android:id="@+id/tvEmployeeId"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="1dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
             android:fontFamily="monospace"
             android:textColor="@color/accent_cyan"
             android:textSize="11sp"
@@ -64,8 +64,8 @@
             android:id="@+id/tvTimestamp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="1dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
             android:layout_marginEnd="8dp"
             android:ellipsize="end"
             android:maxLines="1"
@@ -80,10 +80,10 @@
             android:id="@+id/tvDecisionPill"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_pill"
-            android:paddingStart="8dp"
+            android:background="@drawable/bg_pill_verified"
+            android:paddingStart="10dp"
             android:paddingTop="3dp"
-            android:paddingEnd="8dp"
+            android:paddingEnd="10dp"
             android:paddingBottom="3dp"
             android:textColor="@color/accent_green"
             android:textSize="9sp"
@@ -97,6 +97,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:fontFamily="monospace"
             android:textColor="@color/text_secondary"
             android:textSize="10sp"
             app:layout_constraintEnd_toEndOf="parent"

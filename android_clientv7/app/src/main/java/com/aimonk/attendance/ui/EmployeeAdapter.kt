@@ -4,13 +4,16 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import coil.ImageLoader
+import coil.load
 import coil.request.ImageRequest
-import com.aimonk.attendance.MainActivity
 import com.aimonk.attendance.R
 import com.aimonk.attendance.databinding.ItemEmployeeBinding
 import com.aimonk.attendance.model.EmployeeItem
 
 class EmployeeAdapter(
+    private val imageLoader: ImageLoader? = null,
+    private val baseUrl: String = "",
     private var employees: List<EmployeeItem> = emptyList(),
     private val onDeleteClick: (EmployeeItem) -> Unit
 ) : RecyclerView.Adapter<EmployeeAdapter.EmployeeViewHolder>() {
@@ -39,33 +42,34 @@ class EmployeeAdapter(
             binding.tvEmpId.text = emp.employeeId
 
             if (emp.isPresent) {
-                binding.tvPresenceBadge.text = "● PRESENT"
+                binding.tvPresenceBadge.text = "PRESENT"
                 binding.tvPresenceBadge.setTextColor(Color.parseColor("#10B981"))
-                binding.tvPresenceBadge.setBackgroundColor(Color.parseColor("#0A2B1E"))
+                binding.tvPresenceBadge.setBackgroundResource(R.drawable.bg_pill_verified)
             } else {
                 binding.tvPresenceBadge.text = "ABSENT"
-                binding.tvPresenceBadge.setTextColor(Color.parseColor("#64748B"))
-                binding.tvPresenceBadge.setBackgroundColor(Color.parseColor("#111827"))
+                binding.tvPresenceBadge.setTextColor(Color.parseColor("#94A3B8"))
+                binding.tvPresenceBadge.setBackgroundResource(R.drawable.bg_pill_absent)
             }
 
-            val ctx = binding.imgEmpPhoto.context
-            val actMain = (ctx as? android.app.Activity) as? MainActivity
-
             val rawPhoto = emp.photoUrl ?: emp.imagePath
+            val fullBaseUrl = if (baseUrl.isNotEmpty()) baseUrl else "https://aimonk-labs--amapro-attendance.modal.run"
             if (!rawPhoto.isNullOrEmpty()) {
-                val fullUrl = if (rawPhoto.startsWith("http")) rawPhoto
-                              else "https://49.206.228.75:9001/$rawPhoto".trimEnd('/')
-                if (actMain != null) {
-                    val req = ImageRequest.Builder(ctx)
+                val fullUrl = (if (rawPhoto.startsWith("http")) rawPhoto
+                              else "${fullBaseUrl.trimEnd('/')}/${rawPhoto.trimStart('/')}").replace(" ", "%20")
+                if (imageLoader != null) {
+                    val req = ImageRequest.Builder(binding.imgEmpPhoto.context)
                         .data(fullUrl)
                         .placeholder(R.drawable.ic_launcher_foreground)
                         .error(R.drawable.ic_launcher_foreground)
                         .crossfade(true)
                         .target(binding.imgEmpPhoto)
                         .build()
-                    actMain.imageLoader.enqueue(req)
+                    imageLoader.enqueue(req)
                 } else {
-                    binding.imgEmpPhoto.setImageResource(R.drawable.ic_launcher_foreground)
+                    binding.imgEmpPhoto.load(fullUrl) {
+                        placeholder(R.drawable.ic_launcher_foreground)
+                        error(R.drawable.ic_launcher_foreground)
+                    }
                 }
             } else {
                 binding.imgEmpPhoto.setImageResource(R.drawable.ic_launcher_foreground)

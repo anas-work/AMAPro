@@ -5,11 +5,14 @@ High-performance native Android Edge AI client for continuous real-time face det
 ---
 
 ## ⚡ Performance Highlights
-* **$1.5\text{–}3.0\text{ ms}$ Face Detection**: Powered by **Google LiteRT 1.4.0** (TFLite) with hardware acceleration / GPU delegate.
-* **16KB Page-Size Aligned**: Fully compliant with Android 15 16KB memory page-size requirements (LiteRT 1.4.0 + CameraX 1.4.0).
-* **Zero-Copy Camera Pipeline**: Built on **AndroidX CameraX** with direct hardware buffer memory mapping.
-* **Locked 60 FPS Fluid Rendering**: Custom hardware-accelerated canvas overlay with velocity dead-reckoning motion interpolation.
-* **Micro-Payload Cloud Dispatches**: Sends throttled $224 \times 224$ face crops to the Modal / GPU server via persistent OkHttp3 HTTP/2 connection pooling with custom SSL trust.
+* **$1.5\text{–}3.0\text{ ms}$ Face Detection**: Powered by **Google LiteRT 1.4.0** (TFLite) with GPU delegate and NNAPI fallback.
+* **Aggressive Frontal Detection (70% Confidence)**: Calibrated at `confThreshold = 0.70f` to aggressively filter background noise and instantly lock onto frontal faces.
+* **Natural Bounding Box Alignment**: Natural raw bounding box coordinates aligned precisely to face contours without artificial cuts or offsets.
+* **Aspect-Preserving `fillCenter` Uniform Scaling**: Pixel-perfect bounding box alignment matching CameraX `PreviewView` layout.
+* **Dead-Zone Jitter & Dimension Stabilization**: Bounding box center locked when stationary ($< 4\text{ px}$) and dimensions stabilized ($< 3.5\text{ px}$) to eliminate jitter and pulsing.
+* **Thermal Throttling Protection**: 2-thread LiteRT execution with decoupled GPU delegate prevents chipset heating and sustains consistent 60 FPS without dropping frames.
+* **Zero-Allocation Live Loop & Large Heap**: Pre-allocated byte buffers, bitmaps, `RectF`, and `Paint` caches combined with `android:largeHeap="true"` to prevent Garbage Collection pauses.
+* **Micro-Payload Cloud Dispatches (70px Gate)**: Automatically captures and sends $224 \times 224$ crops to the Modal GPU server once the face reaches the 70px gate with a 600ms settle delay.
 
 ---
 
@@ -26,13 +29,13 @@ android_clientv7/
 │       ├── java/com/aimonk/attendance/
 │       │   ├── MainActivity.kt               <-- CameraX Lifecycle & Main Orchestrator
 │       │   ├── engine/
-│       │   │   ├── UltraLightDetector.kt     <-- LiteRT / TFLite Detector
-│       │   │   ├── IoUTracker.kt             <-- Multi-Face Tracking & Dead-Reckoning
-│       │   │   ├── CropDispatcher.kt         <-- 120px Gate & Async GPU Cloud Dispatcher
+│       │   │   ├── UltraLightDetector.kt     <-- LiteRT Detector (70% conf, GPU/NNAPI)
+│       │   │   ├── IoUTracker.kt             <-- Multi-Face Tracking & Motion Extrapolation
+│       │   │   ├── CropDispatcher.kt         <-- 70px Gate & Async GPU Cloud Dispatcher
 │       │   │   └── OverlayView.kt            <-- 60 FPS Custom Canvas Drawing Engine
 │       │   ├── network/
-│       │   │   └── ApiService.kt             <-- OkHttp3 Client (Modal / On-prem)
-│       │   ├── ui/                           # UI Adapters & Dialogs
+│       │   │   └── ApiService.kt             <-- OkHttp3 Client (Modal Cloud Backend)
+│       │   ├── ui/                           # UI Adapters & Redesigned Dialogs
 │       │   └── model/
 │       │       └── AttendanceModels.kt
 │       └── res/
@@ -46,26 +49,18 @@ android_clientv7/
 
 ## 🚀 How to Build & Run
 
-### Method 1: In Android Studio (Recommended)
-1. Launch **Android Studio** (Hedgehog or newer).
-2. Click **Open** and select the `android_clientv7/` folder.
-3. Wait for Gradle Sync to complete (Android SDK 35, minSdk 26).
-4. Connect an Android phone / tablet via USB (or start an Android Virtual Device).
-5. Click **Run (`Shift + F10`)**.
-
-### Method 2: Build APK via Terminal / Gradle CLI
+### Build APK via Terminal / Gradle CLI
 ```bash
 cd android_clientv7
 ./gradlew assembleDebug
 ```
-The output APK will be generated at:
-`app/build/outputs/apk/debug/app-debug.apk`
+The output APK is generated at:
+`app/build/outputs/apk/debug/AMAPro_Attendance.apk`
 
 ---
 
 ## ⚙️ Server Configuration
-To point the app to a different GPU server, update the `baseUrl` in [`MainActivity.kt`](file:///h3/anas/ABLBL_AttendanceV2/android_clientv7/app/src/main/java/com/aimonk/attendance/MainActivity.kt) and [`ApiService.kt`](file:///h3/anas/ABLBL_AttendanceV2/android_clientv7/app/src/main/java/com/aimonk/attendance/network/ApiService.kt):
+The app is pre-configured to communicate with the production Modal Serverless GPU backend:
 ```kotlin
-val apiService = ApiService("https://aimonk-labs--ablbl-attendance.modal.run") // Or https://YOUR_SERVER_IP:9001
+val apiService = ApiService("https://aimonk-labs--amapro-attendance.modal.run")
 ```
-Also update the domain in `app/src/main/res/xml/network_security_config.xml` if needed.

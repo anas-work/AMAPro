@@ -20,38 +20,76 @@ class EnrollDialog(
     context: Context,
     private val apiService: ApiService,
     private val getCurrentCameraFrame: () -> Bitmap?,
+    private val onFlipCamera: (() -> Unit)? = null,
+    private val onRequestGallery: (((Bitmap) -> Unit) -> Unit)? = null,
     private val onEnrollSuccess: () -> Unit
 ) : Dialog(context) {
 
     private var capturedBitmap: Bitmap? = null
+    private var isGalleryMode: Boolean = false
 
     init {
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         val binding = DialogEnrollBinding.inflate(LayoutInflater.from(context))
         setContentView(binding.root)
         window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        window?.attributes?.windowAnimations = com.aimonk.attendance.R.style.DialogAnimation_Executive
+        window?.setLayout(
+            (context.resources.displayMetrics.widthPixels * 0.92).toInt(),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
 
         binding.btnSnapPhoto.setOnClickListener {
             val frame = getCurrentCameraFrame()
             if (frame != null) {
                 capturedBitmap = frame
                 binding.imgEnrollPreview.setImageBitmap(frame)
-                binding.btnSnapPhoto.text = "🔄 Retake Photo"
+                binding.btnSnapPhoto.text = "Retake Photo"
                 Toast.makeText(context, "Photo captured!", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(context, "Camera frame not available yet.", Toast.LENGTH_SHORT).show()
             }
         }
 
+        binding.btnEnrollFlipCamera.setOnClickListener {
+            onFlipCamera?.invoke()
+            Toast.makeText(context, "Flipped camera lens", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnPickGallery.setOnClickListener {
+            onRequestGallery?.invoke { pickedBmp ->
+                capturedBitmap = pickedBmp
+                binding.imgEnrollPreview.setImageBitmap(pickedBmp)
+                binding.tvGalleryHint.visibility = android.view.View.GONE
+                binding.btnPickGallery.text = "Change Selected Photo"
+                Toast.makeText(context, "Gallery photo selected!", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.imgEnrollPreview.setOnClickListener {
+            if (isGalleryMode) {
+                binding.btnPickGallery.performClick()
+            }
+        }
+
         binding.btnTabCamera.setOnClickListener {
+            isGalleryMode = false
             binding.btnTabCamera.setBackgroundColor(Color.parseColor("#059669"))
-            binding.btnTabGallery.setBackgroundColor(Color.parseColor("#1E293B"))
+            binding.btnTabGallery.setBackgroundColor(Color.parseColor("#161F30"))
+            binding.layoutCameraActions.visibility = android.view.View.VISIBLE
+            binding.layoutGalleryActions.visibility = android.view.View.GONE
+            binding.tvGalleryHint.visibility = android.view.View.GONE
         }
 
         binding.btnTabGallery.setOnClickListener {
+            isGalleryMode = true
             binding.btnTabGallery.setBackgroundColor(Color.parseColor("#059669"))
-            binding.btnTabCamera.setBackgroundColor(Color.parseColor("#1E293B"))
-            Toast.makeText(context, "Using camera capture mode", Toast.LENGTH_SHORT).show()
+            binding.btnTabCamera.setBackgroundColor(Color.parseColor("#161F30"))
+            binding.layoutCameraActions.visibility = android.view.View.GONE
+            binding.layoutGalleryActions.visibility = android.view.View.VISIBLE
+            if (capturedBitmap == null) {
+                binding.tvGalleryHint.visibility = android.view.View.VISIBLE
+            }
         }
 
         binding.btnSubmitEnroll.setOnClickListener {

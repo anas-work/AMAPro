@@ -20,7 +20,7 @@ recognition:
   unknown_threshold: 0.35         # Below 0.35 is UNKNOWN
 
 quality:
-  min_face_size: 120              # 120px Gate trigger threshold
+  min_face_size: 70               # 70px Gate trigger threshold
   min_detection_confidence: 0.30
   min_sharpness: 25.0
   max_yaw: 55.0

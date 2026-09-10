@@ -15,7 +15,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- 1. Top Navigation Header (status bar aware via padding in code) -->
+        <!-- 1. Top Executive App Bar -->
         <LinearLayout
             android:id="@+id/headerBar"
             android:layout_width="match_parent"
@@ -23,88 +23,136 @@
             android:background="@color/bg_secondary"
             android:orientation="vertical">
 
-            <!-- Bottom border line -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="0" />
-
-            <!-- Header content row -->
+            <!-- Header Content Row -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/headerContent"
                 android:layout_width="match_parent"
-                android:layout_height="58dp"
+                android:layout_height="60dp"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp">
 
-                <!-- Brand Logo -->
-                <TextView
-                    android:id="@+id/tvLogo"
+                <!-- Corporate Brand Identity -->
+                <LinearLayout
+                    android:id="@+id/brandContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-black"
-                    android:letterSpacing="0.06"
-                    android:text="⚡ AMAPRO"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <ImageView
+                        android:id="@+id/imgBrandShield"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:src="@drawable/ic_shield_corp"
+                        android:contentDescription="AMAPro Shield" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tvLogo"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-black"
+                                android:letterSpacing="0.04"
+                                android:text="AMA"
+                                android:textColor="@color/text_primary"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-black"
+                                android:letterSpacing="0.04"
+                                android:text="PRO"
+                                android:textColor="@color/accent_green"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:letterSpacing="0.12"
+                            android:text="ENTERPRISE AI"
+                            android:textColor="@color/text_muted"
+                            android:textSize="8sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
 
                 <!-- Staff Directory Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnOpenEmployees"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
+                    android:layout_height="38dp"
                     android:layout_marginEnd="6dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
                     android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
+                    android:paddingEnd="12dp"
                     android:text="STAFF"
                     android:textColor="@color/accent_cyan"
                     android:textSize="10sp"
                     android:textStyle="bold"
                     app:backgroundTint="@color/accent_cyan_dim"
-                    app:cornerRadius="8dp"
+                    app:cornerRadius="10dp"
+                    app:icon="@drawable/ic_badge_staff"
+                    app:iconSize="16dp"
+                    app:iconTint="@color/accent_cyan"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@id/btnOpenEnroll"
                     app:layout_constraintTop_toTopOf="parent"
-                    tools:ignore="SmallSp,SpeakableTextPresentCheck" />
+                    tools:ignore="SmallSp" />
 
                 <!-- Enroll Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnOpenEnroll"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
+                    android:layout_height="38dp"
                     android:layout_marginEnd="6dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
                     android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:text="+ ENROLL"
+                    android:paddingEnd="12dp"
+                    android:text="ENROLL"
                     android:textColor="@color/accent_green"
                     android:textSize="10sp"
                     android:textStyle="bold"
                     app:backgroundTint="@color/accent_green_dim"
-                    app:cornerRadius="8dp"
+                    app:cornerRadius="10dp"
+                    app:icon="@drawable/ic_user_add_corp"
+                    app:iconSize="16dp"
+                    app:iconTint="@color/accent_green"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@id/btnModeToggle"
                     app:layout_constraintTop_toTopOf="parent"
-                    tools:ignore="SmallSp,SpeakableTextPresentCheck" />
+                    tools:ignore="SmallSp" />
 
-                <!-- Mode Toggle Pill -->
+                <!-- Mode Toggle Capsule -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnModeToggle"
                     style="@style/Widget.Material3.Button"
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
+                    android:layout_height="38dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
-                    android:minWidth="72dp"
+                    android:minWidth="76dp"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
                     android:text="@string/label_entry"
@@ -112,7 +160,7 @@
                     android:textSize="11sp"
                     android:textStyle="bold"
                     app:backgroundTint="@color/accent_green"
-                    app:cornerRadius="8dp"
+                    app:cornerRadius="10dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -120,21 +168,21 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Header bottom border -->
+            <!-- Header Bottom Hairline Border -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/border_color" />
         </LinearLayout>
 
-        <!-- 2. Main Content (camera + feed) -->
+        <!-- 2. Main Content (Camera + Dashboard Feed) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <!-- Camera Viewport (45% height) -->
+            <!-- Camera Viewport (42% height) -->
             <FrameLayout
                 android:id="@+id/cameraContainer"
                 android:layout_width="match_parent"
@@ -146,22 +194,85 @@
                     android:id="@+id/previewView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    app:implementationMode="performance"
+                    app:implementationMode="compatible"
                     app:scaleType="fillCenter" />
+
+                <!-- Frozen Frame when Camera is Paused/Switched Off -->
+                <ImageView
+                    android:id="@+id/imgPausedFrame"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
 
                 <com.aimonk.attendance.engine.OverlayView
                     android:id="@+id/overlayView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
 
-                <!-- Camera status indicator -->
+                <!-- Floating Live Controls (Top Right) -->
                 <LinearLayout
+                    android:id="@+id/layoutCameraLiveControls"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="12dp"
+                    android:orientation="horizontal">
+
+                    <!-- Flip Camera -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFlipCamera"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="8dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="12dp"
+                        android:text="Flip"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="#CC0F1A2D"
+                        app:strokeColor="#FF2A3B59"
+                        app:strokeWidth="1dp"
+                        app:cornerRadius="10dp"
+                        app:icon="@drawable/ic_camera_flip_corp"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/text_primary" />
+
+                    <!-- Pause/Resume Camera -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCameraPauseResume"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="12dp"
+                        android:text="Pause"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="#CC0F1A2D"
+                        app:strokeColor="#FF2A3B59"
+                        app:strokeWidth="1dp"
+                        app:cornerRadius="10dp"
+                        app:icon="@drawable/ic_camera_pause_corp"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/text_primary" />
+                </LinearLayout>
+
+                <!-- Live Stream Indicator Badge (Bottom Left) -->
+                <LinearLayout
+                    android:id="@+id/layoutCameraStatusIndicator"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="bottom|start"
-                    android:layout_margin="10dp"
-                    android:alpha="0.85"
-                    android:background="@drawable/bg_card_stats"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/bg_pill_unknown"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:paddingStart="10dp"
@@ -170,17 +281,79 @@
                     android:paddingBottom="5dp">
 
                     <TextView
+                        android:id="@+id/tvCameraLiveBadge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="● REC"
+                        android:letterSpacing="0.08"
+                        android:text="● LIVE"
                         android:textColor="@color/accent_red"
                         android:textSize="10sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
+                <!-- Camera Offline / Sensor Inactive Overlay -->
+                <FrameLayout
+                    android:id="@+id/cameraStartOverlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#F2080C14"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="28dp">
+
+                        <ImageView
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:src="@drawable/ic_sensor_offline"
+                            android:contentDescription="Camera Sensor" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="Camera Sensor Inactive"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Initiate live biometric recognition feed"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnStartCamera"
+                            android:layout_width="wrap_content"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="18dp"
+                            android:background="@drawable/bg_button_corporate_primary"
+                            android:paddingStart="22dp"
+                            android:paddingEnd="24dp"
+                            android:text="START CAMERA FEED"
+                            android:textColor="@color/white"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:cornerRadius="12dp"
+                            app:icon="@drawable/ic_camera_play_corp"
+                            app:iconSize="16dp"
+                            app:iconTint="@color/white" />
+                    </LinearLayout>
+                </FrameLayout>
+
             </FrameLayout>
 
-            <!-- Dashboard and Activity Feed (58% height) -->
+            <!-- 3. Dashboard and Activity Feed (58% height) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
@@ -188,134 +361,178 @@
                 android:background="@color/bg_dark"
                 android:orientation="vertical">
 
-                <!-- Scrollable content inside -->
-                <ScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="0"
-                    android:visibility="gone" />
-
-                <!-- Stats Row -->
+                <!-- Executive KPI Metrics Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:paddingStart="12dp"
-                    android:paddingTop="10dp"
+                    android:paddingTop="12dp"
                     android:paddingEnd="12dp"
-                    android:paddingBottom="4dp">
+                    android:paddingBottom="6dp">
 
-                    <!-- Present -->
+                    <!-- Present KPI Tile -->
                     <LinearLayout
                         android:id="@+id/boxPresent"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginEnd="4dp"
-                        android:background="@drawable/bg_card_stats"
-                        android:gravity="center"
+                        android:layout_marginEnd="5dp"
+                        android:background="@drawable/bg_kpi_present"
                         android:orientation="vertical"
-                        android:paddingTop="8dp"
-                        android:paddingBottom="8dp">
+                        android:paddingStart="12dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="10dp">
 
-                        <TextView
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/label_present"
-                            android:textColor="@color/text_muted"
-                            android:textSize="9sp"
-                            android:textStyle="bold"
-                            android:letterSpacing="0.08" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_stat_present"
+                                android:contentDescription="Present Icon" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:letterSpacing="0.08"
+                                android:text="@string/label_present"
+                                android:textColor="@color/accent_green_bright"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
 
                         <TextView
                             android:id="@+id/tvPresentCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif-black"
                             android:text="0"
                             android:textColor="@color/accent_green"
-                            android:textSize="22sp"
+                            android:textSize="24sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <!-- Absent -->
+                    <!-- Absent KPI Tile -->
                     <LinearLayout
                         android:id="@+id/boxAbsent"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        android:background="@drawable/bg_card_stats"
-                        android:gravity="center"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginEnd="3dp"
+                        android:background="@drawable/bg_kpi_absent"
                         android:orientation="vertical"
-                        android:paddingTop="8dp"
-                        android:paddingBottom="8dp">
+                        android:paddingStart="12dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="10dp">
 
-                        <TextView
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/label_absent"
-                            android:textColor="@color/text_muted"
-                            android:textSize="9sp"
-                            android:textStyle="bold"
-                            android:letterSpacing="0.08" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_stat_absent"
+                                android:contentDescription="Absent Icon" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:letterSpacing="0.08"
+                                android:text="@string/label_absent"
+                                android:textColor="@color/accent_cyan"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
 
                         <TextView
                             android:id="@+id/tvAbsentCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif-black"
                             android:text="0"
-                            android:textColor="@color/text_primary"
-                            android:textSize="22sp"
+                            android:textColor="@color/accent_cyan"
+                            android:textSize="24sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <!-- Unknown -->
+                    <!-- Unknown KPI Tile -->
                     <LinearLayout
                         android:id="@+id/boxUnknown"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        android:background="@drawable/bg_card_stats"
-                        android:gravity="center"
+                        android:layout_marginStart="5dp"
+                        android:background="@drawable/bg_kpi_unknown"
                         android:orientation="vertical"
-                        android:paddingTop="8dp"
-                        android:paddingBottom="8dp">
+                        android:paddingStart="12dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="10dp">
 
-                        <TextView
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/label_unknown"
-                            android:textColor="@color/text_muted"
-                            android:textSize="9sp"
-                            android:textStyle="bold"
-                            android:letterSpacing="0.08" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_stat_unknown"
+                                android:contentDescription="Unknown Icon" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:letterSpacing="0.08"
+                                android:text="@string/label_unknown"
+                                android:textColor="@color/accent_red"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
 
                         <TextView
                             android:id="@+id/tvUnknownCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif-black"
                             android:text="0"
                             android:textColor="@color/accent_red"
-                            android:textSize="22sp"
+                            android:textSize="24sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Feed Header Row: LIVE status + Stop + Flush -->
+                <!-- Activity Feed Header Controls -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:paddingTop="4dp">
+                    android:layout_height="42dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
 
-                    <!-- Live Badge -->
+                    <!-- Live Feed Title -->
                     <TextView
                         android:id="@+id/tvFeedLiveStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:letterSpacing="0.06"
                         android:text="@string/label_live_feed"
                         android:textColor="@color/accent_green"
                         android:textSize="11sp"
@@ -324,27 +541,7 @@
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
-                    <!-- Flush button -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnFlushFeed"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="32dp"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
-                        android:text="Flush"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="10sp"
-                        app:backgroundTint="@color/border_color"
-                        app:cornerRadius="6dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        tools:ignore="SmallSp" />
-
-                    <!-- Stop/Resume button -->
+                    <!-- Stop/Resume Feed Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnStopResumeFeed"
                         style="@style/Widget.Material3.Button.TonalButton"
@@ -359,21 +556,44 @@
                         android:textColor="@color/text_secondary"
                         android:textSize="10sp"
                         app:backgroundTint="@color/border_color"
-                        app:cornerRadius="6dp"
+                        app:cornerRadius="8dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toStartOf="@id/btnFlushFeed"
                         app:layout_constraintTop_toTopOf="parent"
                         tools:ignore="SmallSp" />
+
+                    <!-- Flush Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFlushFeed"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="Flush"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp"
+                        app:backgroundTint="@color/border_color"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_flush_sweep"
+                        app:iconSize="14dp"
+                        app:iconTint="@color/text_secondary"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:ignore="SmallSp" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <!-- Filter Tabs -->
+                <!-- Segmented Filter Tabs Container -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
                     android:layout_marginStart="12dp"
                     android:layout_marginEnd="12dp"
-                    android:layout_marginBottom="4dp"
-                    android:background="@drawable/bg_card_stats"
+                    android:layout_marginBottom="6dp"
+                    android:background="@drawable/bg_glass_card"
                     android:orientation="horizontal"
                     android:padding="3dp">
 
@@ -390,7 +610,7 @@
                         android:textSize="9sp"
                         android:textStyle="bold"
                         app:backgroundTint="@color/accent_green"
-                        app:cornerRadius="5dp"
+                        app:cornerRadius="8dp"
                         tools:ignore="SmallSp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -404,7 +624,7 @@
                         android:text="CHECK-IN"
                         android:textColor="@color/text_secondary"
                         android:textSize="9sp"
-                        app:cornerRadius="5dp"
+                        app:cornerRadius="8dp"
                         tools:ignore="SmallSp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -418,7 +638,7 @@
                         android:text="CHECK-OUT"
                         android:textColor="@color/text_secondary"
                         android:textSize="9sp"
-                        app:cornerRadius="5dp"
+                        app:cornerRadius="8dp"
                         tools:ignore="SmallSp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -432,12 +652,12 @@
                         android:text="UNKNOWN"
                         android:textColor="@color/accent_red"
                         android:textSize="9sp"
-                        app:cornerRadius="5dp"
+                        app:cornerRadius="8dp"
                         tools:ignore="SmallSp" />
 
                 </LinearLayout>
 
-                <!-- Activity Feed RecyclerView -->
+                <!-- Activity Feed RecyclerView with Cascading Entrance Animation -->
                 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                     android:id="@+id/swipeRefresh"
                     android:layout_width="match_parent"
@@ -456,8 +676,10 @@
                             android:paddingStart="12dp"
                             android:paddingEnd="12dp"
                             android:paddingBottom="16dp"
+                            android:layoutAnimation="@anim/layout_animation_fall_down"
                             tools:listitem="@layout/item_activity_card" />
 
+                        <!-- Empty Feed Slate State -->
                         <LinearLayout
                             android:id="@+id/emptyFeedContainer"
                             android:layout_width="wrap_content"
@@ -467,17 +689,18 @@
                             android:orientation="vertical"
                             android:visibility="gone">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="📋"
-                                android:textSize="36sp" />
+                            <ImageView
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:src="@drawable/ic_empty_feed"
+                                android:contentDescription="Empty Feed" />
 
                             <TextView
                                 android:id="@+id/tvEmptyFeed"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
+                                android:layout_marginTop="10dp"
+                                android:letterSpacing="0.04"
                                 android:text="No activity records yet"
                                 android:textColor="@color/text_muted"
                                 android:textSize="13sp" />

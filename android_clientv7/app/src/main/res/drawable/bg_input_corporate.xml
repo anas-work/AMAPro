@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Focused state with emerald glow border -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#FF131F36" />
+            <corners android:radius="12dp" />
+            <stroke android:width="1.8dp" android:color="#FF10B981" />
+        </shape>
+    </item>
+    <!-- Default state -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FF0F172A" />
+            <corners android:radius="12dp" />
+            <stroke android:width="1.2dp" android:color="#FF2A3B59" />
+        </shape>
+    </item>
+</selector>

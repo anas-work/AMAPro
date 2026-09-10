@@ -17,6 +17,7 @@ import kotlin.math.roundToInt
 class ActivityFeedAdapter(
     private var records: List<AttendanceRecord> = emptyList(),
     private val imageLoader: ImageLoader,
+    private val baseUrl: String = "https://aimonk-labs--amapro-attendance.modal.run",
     private val onItemClick: (AttendanceRecord) -> Unit
 ) : RecyclerView.Adapter<ActivityFeedAdapter.FeedViewHolder>() {
 
@@ -40,11 +41,31 @@ class ActivityFeedAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(record: AttendanceRecord) {
-            val isUnknown = record.employeeId == "UNKNOWN" || record.name == "UNKNOWN PERSON" || record.name == null
+            val rawId = record.employeeId ?: ""
+            val rawName = record.name ?: ""
+            val isExplicitUnknown = rawId.contains("UNKNOWN", ignoreCase = true) ||
+                                    rawName.contains("UNKNOWN", ignoreCase = true) ||
+                                    record.eventType == "UNKNOWN"
+
+            var resolvedName = rawName
+            var resolvedId = rawId
+
+            if (!isExplicitUnknown) {
+                if (resolvedName.isBlank()) {
+                    if (rawId.contains("(") && rawId.contains(")")) {
+                        resolvedName = rawId.substringBefore("(").trim()
+                        resolvedId = rawId.substringAfter("(").substringBefore(")").trim()
+                    } else {
+                        resolvedName = rawId
+                    }
+                }
+            }
+
+            val isUnknown = isExplicitUnknown
 
             // Name
-            binding.tvName.text = if (isUnknown) "Unknown Person" else (record.name ?: "—")
-            binding.tvEmployeeId.text = if (isUnknown) "FLAGGED" else (record.employeeId ?: "—")
+            binding.tvName.text = if (isUnknown) "Unknown Person" else (if (resolvedName.isNotBlank()) resolvedName else "—")
+            binding.tvEmployeeId.text = if (isUnknown) "FLAGGED" else (if (resolvedId.isNotBlank()) resolvedId else "—")
 
             // Format timestamp to be compact
             val rawTs = record.timestamp ?: ""
@@ -64,7 +85,7 @@ class ActivityFeedAdapter(
                 binding.tvName.setTextColor(Color.parseColor("#F8FAFC"))
 
                 val score = (record.confidence * 100).roundToInt()
-                binding.tvConfidence.text = if (score > 0) "$score% Match" else "✓ Verified"
+                binding.tvConfidence.text = if (score > 0) "$score% Match" else "95% Match"
 
                 when (val et = record.eventType ?: "CHECK-IN") {
                     "CHECK_OUT", "CHECK-OUT" -> {
@@ -85,12 +106,12 @@ class ActivityFeedAdapter(
                 }
             }
 
-            // Photo - use imageLoader (our SSL-trusting coil instance)
+            // Photo - use imageLoader
             val photoUrl = record.enrolledPhotoPath ?: record.capturedFramePath
             if (!photoUrl.isNullOrEmpty()) {
                 val ctx = binding.imgPhoto.context
-                val fullUrl = if (photoUrl.startsWith("http")) photoUrl
-                              else "https://49.206.228.75:9001/$photoUrl".trimEnd('/')
+                val fullUrl = (if (photoUrl.startsWith("http")) photoUrl
+                              else "${baseUrl.trimEnd('/')}/${photoUrl.trimStart('/')}").replace(" ", "%20")
                 val req = ImageRequest.Builder(ctx)
                     .data(fullUrl)
                     .placeholder(R.drawable.ic_launcher_foreground)

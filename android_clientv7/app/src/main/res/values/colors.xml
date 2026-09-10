@@ -1,25 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Core Monochrome & Neutrals -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="bg_dark">#FF070B14</color>
-    <color name="bg_secondary">#FF0B1120</color>
-    <color name="bg_card">#FF111827</color>
-    <color name="bg_card2">#FF1E293B</color>
-    <color name="border_color">#FF1E293B</color>
-    <color name="border_subtle">#FF334155</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- Obsidian & Executive Dark Surfaces -->
+    <color name="bg_dark">#FF080C14</color>
+    <color name="bg_secondary">#FF0D1524</color>
+    <color name="bg_card">#FF111B2E</color>
+    <color name="bg_card2">#FF162238</color>
+    <color name="bg_glass">#D90F1A2D</color>
+    <color name="bg_glass_elevated">#E615223A</color>
+
+    <!-- Refined Border & Hairline Strokes -->
+    <color name="border_color">#FF1E2D47</color>
+    <color name="border_subtle">#FF2A3B59</color>
+    <color name="border_highlight">#FF3B527A</color>
+    <color name="border_emerald_glow">#4D10B981</color>
+    <color name="border_crimson_glow">#4DEF4444</color>
+    <color name="border_amber_glow">#4DF59E0B</color>
+
+    <!-- Typography Hierarchy -->
     <color name="text_primary">#FFF8FAFC</color>
     <color name="text_secondary">#FF94A3B8</color>
     <color name="text_muted">#FF64748B</color>
+    <color name="text_disabled">#FF475569</color>
+
+    <!-- Executive Accent Tokens (Emerald, Slate-Indigo, Champagne/Amber, Crimson, Royal Violet) -->
     <color name="accent_green">#FF10B981</color>
+    <color name="accent_green_bright">#FF34D399</color>
     <color name="accent_green_dim">#1A10B981</color>
-    <color name="accent_cyan">#FF06B6D4</color>
-    <color name="accent_cyan_dim">#1A06B6D4</color>
-    <color name="accent_purple">#FFD946EF</color>
-    <color name="accent_purple_dim">#1AD946EF</color>
+    <color name="accent_green_glass">#2E10B981</color>
+
+    <color name="accent_cyan">#FF38BDF8</color>
+    <color name="accent_cyan_dim">#1A38BDF8</color>
+    <color name="accent_cyan_glass">#2E38BDF8</color>
+
     <color name="accent_orange">#FFF59E0B</color>
     <color name="accent_orange_dim">#1AF59E0B</color>
+    <color name="accent_orange_glass">#2EF59E0B</color>
+
     <color name="accent_red">#FFEF4444</color>
     <color name="accent_red_dim">#1AEF4444</color>
-    <color name="overlay_dark">#CC070B14</color>
+    <color name="accent_red_glass">#2EEF4444</color>
+
+    <color name="accent_purple">#FF8B5CF6</color>
+    <color name="accent_purple_dim">#1A8B5CF6</color>
+    <color name="accent_purple_glass">#2E8B5CF6</color>
+
+    <!-- Overlays & Scrims -->
+    <color name="overlay_dark">#D9080C14</color>
+    <color name="overlay_modal">#B305080E</color>
 </resources>

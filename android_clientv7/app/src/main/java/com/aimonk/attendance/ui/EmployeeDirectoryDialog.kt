@@ -17,11 +17,13 @@ import com.aimonk.attendance.network.ApiService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import coil.ImageLoader
 import kotlinx.coroutines.withContext
 
 class EmployeeDirectoryDialog(
     context: Context,
     private val apiService: ApiService,
+    private val imageLoader: ImageLoader? = null,
     private val onDataChanged: () -> Unit
 ) : Dialog(context) {
 
@@ -33,8 +35,13 @@ class EmployeeDirectoryDialog(
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(binding.root)
         window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        window?.attributes?.windowAnimations = com.aimonk.attendance.R.style.DialogAnimation_Executive
+        window?.setLayout(
+            (context.resources.displayMetrics.widthPixels * 0.92).toInt(),
+            (context.resources.displayMetrics.heightPixels * 0.85).toInt()
+        )
 
-        adapter = EmployeeAdapter { emp ->
+        adapter = EmployeeAdapter(imageLoader = imageLoader, baseUrl = apiService.baseUrl) { emp ->
             confirmDelete(emp)
         }
 

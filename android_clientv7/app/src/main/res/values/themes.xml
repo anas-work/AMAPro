@@ -1,5 +1,5 @@
 <resources>
-    <!-- Edge-to-edge for Android 9+ (API 28) with display cutout mode -->
+    <!-- Executive Obsidian & Emerald Theme -->
     <style name="Theme.AIMonkAttendance" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/accent_green</item>
         <item name="colorPrimaryVariant">@color/accent_cyan</item>
@@ -11,5 +11,36 @@
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
+        <item name="alertDialogTheme">@style/ExecutiveAlertDialogTheme</item>
+        <item name="materialAlertDialogTheme">@style/ExecutiveAlertDialogTheme</item>
+    </style>
+
+    <!-- Executive Dialog Entrance / Exit Animations -->
+    <style name="DialogAnimation_Executive" parent="@android:style/Animation.Dialog">
+        <item name="android:windowEnterAnimation">@anim/dialog_enter</item>
+        <item name="android:windowExitAnimation">@anim/dialog_exit</item>
+    </style>
+
+    <!-- Glass Dialog Theme -->
+    <style name="Theme.ExecutiveDialog" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowElevation">16dp</item>
+        <item name="android:windowAnimationStyle">@style/DialogAnimation_Executive</item>
+    </style>
+
+    <!-- Executive Material Alert Dialog Theme -->
+    <style name="ExecutiveAlertDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:background">@color/bg_secondary</item>
+        <item name="colorSurface">@color/bg_secondary</item>
+        <item name="colorSurfaceContainerHigh">@color/bg_secondary</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorPrimary">@color/accent_green</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.ExecutiveDialog</item>
+        <item name="android:windowAnimationStyle">@style/DialogAnimation_Executive</item>
+    </style>
+
+    <style name="ShapeAppearance.ExecutiveDialog" parent="">
+        <item name="cornerSize">20dp</item>
     </style>
 </resources>

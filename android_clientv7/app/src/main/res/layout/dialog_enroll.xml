@@ -4,171 +4,317 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardBackgroundColor="#0F172A"
-    app:cardCornerRadius="16dp"
-    app:strokeColor="#334155"
+    app:cardBackgroundColor="@color/bg_secondary"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="24dp"
+    app:strokeColor="@color/border_color"
     app:strokeWidth="1.5dp">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:overScrollMode="never">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="22dp">
 
-            <!-- Title Row -->
+            <!-- Header with Title and Close Button -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Enroll New Employee"
-                    android:textColor="#F8FAFC"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Enroll New Employee"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Register corporate personnel profile"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
 
                 <ImageButton
                     android:id="@+id/btnCloseEnroll"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_menu_close_clear_cancel"
-                    app:tint="#94A3B8" />
+                    android:src="@drawable/ic_close_corp"
+                    android:contentDescription="Close" />
             </LinearLayout>
 
-            <!-- Name Input -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="14dp"
+                android:background="@color/border_color" />
+
+            <!-- Input Fields: Full Name & Employee ID -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <!-- Full Name -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.04"
+                        android:text="Full Name *"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:id="@+id/etEnrollName"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_corporate"
+                        android:hint="e.g. Rahul Sharma"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_disabled"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <!-- Employee ID -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.04"
+                        android:text="Employee ID *"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:id="@+id/etEnrollId"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input_corporate"
+                        android:fontFamily="monospace"
+                        android:hint="e.g. ABL1045"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_disabled"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Mode Selector Tabs (Camera vs Gallery) -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Full Name *"
-                android:textColor="#94A3B8"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/etEnrollName"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="4dp"
-                android:background="#1E293B"
-                android:hint="e.g. Rahul Sharma"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textColor="#F8FAFC"
-                android:textColorHint="#64748B"
-                android:textSize="14sp" />
-
-            <!-- Employee ID Input -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Employee ID *"
-                android:textColor="#94A3B8"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/etEnrollId"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="4dp"
-                android:background="#1E293B"
-                android:hint="e.g. ABL1045"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textColor="#F8FAFC"
-                android:textColorHint="#64748B"
-                android:textSize="14sp" />
-
-            <!-- Mode Tabs -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:text="Enrollment Photo Method *"
-                android:textColor="#94A3B8"
-                android:textSize="12sp"
+                android:letterSpacing="0.04"
+                android:text="Photo Source *"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="36dp"
+                android:layout_height="40dp"
                 android:layout_marginTop="6dp"
-                android:background="#07090E"
+                android:background="@drawable/bg_glass_card"
                 android:orientation="horizontal"
-                android:padding="2dp">
+                android:padding="3dp">
 
-                <Button
+                <!-- Live Camera Tab Button -->
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnTabCamera"
+                    style="@style/Widget.Material3.Button.UnelevatedButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:backgroundTint="#059669"
-                    android:text="📷 Live Webcam"
-                    android:textColor="#FFFFFF"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="Live Capture"
+                    android:textColor="@color/white"
                     android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/accent_green"
+                    app:cornerRadius="8dp" />
 
-                <Button
+                <!-- Gallery Selection Tab Button -->
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnTabGallery"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:backgroundTint="#1E293B"
-                    android:text="📁 Pick Photo"
-                    android:textColor="#94A3B8"
-                    android:textSize="11sp" />
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="Gallery"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp"
+                    app:cornerRadius="8dp" />
             </LinearLayout>
 
-            <!-- Preview / Viewfinder Box -->
+            <!-- Viewport Container for Photo Preview & Capture -->
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="180dp"
+                android:layout_height="220dp"
                 android:layout_marginTop="12dp"
-                android:background="#07090E">
+                android:background="@drawable/bg_glass_card"
+                android:clipToOutline="true">
 
+                <!-- Photo Preview ImageView -->
                 <ImageView
                     android:id="@+id/imgEnrollPreview"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="#FF080C14"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/ic_launcher_foreground" />
+                    android:contentDescription="Photo Preview" />
 
-                <Button
-                    android:id="@+id/btnSnapPhoto"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:layout_gravity="bottom|center_horizontal"
-                    android:layout_marginBottom="8dp"
-                    android:backgroundTint="#06B6D4"
-                    android:text="📸 Capture Photo"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                <!-- 1. Live Camera Actions Overlay -->
+                <LinearLayout
+                    android:id="@+id/layoutCameraActions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:background="#D9080C14"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:padding="10dp"
+                    android:visibility="visible">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSnapPhoto"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="Capture Photo"
+                        android:textColor="@color/white"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/accent_cyan"
+                        app:cornerRadius="10dp"
+                        app:icon="@drawable/ic_camera_shutter_corp"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/white" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnEnrollFlipCamera"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="Flip"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="#FF1E2D47"
+                        app:cornerRadius="10dp"
+                        app:icon="@drawable/ic_camera_flip_corp"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/text_primary" />
+                </LinearLayout>
+
+                <!-- 2. Gallery Actions Overlay -->
+                <LinearLayout
+                    android:id="@+id/layoutGalleryActions"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPickGallery"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="44dp"
+                        android:text="Select Image from Device"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/accent_cyan_dim"
+                        app:cornerRadius="10dp"
+                        app:icon="@drawable/ic_photo_gallery_corp"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/accent_cyan" />
+
+                    <TextView
+                        android:id="@+id/tvGalleryHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Supports JPEG/PNG portrait photos"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
             </FrameLayout>
 
             <!-- Submit Button -->
-            <Button
-                android:id="@+id/btnSubmitEnroll"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="18dp"
-                android:backgroundTint="#059669"
-                android:text="Register Employee"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:cornerRadius="8dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSubmitEnroll"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_button_corporate_primary"
+                    android:text="Register Employee"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_user_add_corp"
+                    app:iconSize="18dp"
+                    app:iconTint="@color/white" />
+            </FrameLayout>
 
         </LinearLayout>
     </ScrollView>

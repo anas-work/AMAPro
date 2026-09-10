@@ -9,7 +9,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
 
-class ApiService(val baseUrl: String = "https://amapro--amapro-attendance.modal.run") {
+class ApiService(val baseUrl: String = "https://aimonk-labs--amapro-attendance.modal.run") {
     private val gson = Gson()
     private val jsonType = "application/json; charset=utf-8".toMediaType()
 

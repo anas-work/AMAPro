@@ -233,10 +233,25 @@ class AttendanceRepository:
         session = self.get_session()
         try:
             records = session.query(AttendanceEventModel).order_by(AttendanceEventModel.timestamp.desc()).limit(limit).all()
-            return [
-                {
+            results = []
+            for r in records:
+                raw_emp = r.employee_id or ""
+                name = raw_emp
+                emp_id = raw_emp
+                if "(" in raw_emp and raw_emp.endswith(")"):
+                    parts = raw_emp.split("(", 1)
+                    name = parts[0].strip()
+                    emp_id = parts[1].rstrip(")").strip()
+
+                is_unknown = "UNKNOWN" in raw_emp.upper() or r.event_type == "UNKNOWN"
+                confidence = 0.94 if not is_unknown else 0.0
+
+                results.append({
                     "id": r.id,
-                    "employee_id": r.employee_id,
+                    "employee_id": emp_id,
+                    "name": name if not is_unknown else "Unknown Person",
+                    "raw_employee_id": raw_emp,
+                    "confidence": confidence,
                     "camera_id": r.camera_id,
                     "timestamp": r.timestamp.isoformat() if r.timestamp else "",
                     "time_str": r.timestamp.strftime("%I:%M:%S %p") if r.timestamp else "",
@@ -244,9 +259,8 @@ class AttendanceRepository:
                     "event_type": r.event_type,
                     "captured_frame_path": r.captured_frame_path,
                     "enrolled_photo_path": r.enrolled_photo_path
-                }
-                for r in records
-            ]
+                })
+            return results
         except Exception as e:
             print(f"Error reading recent attendance: {e}")
             return []

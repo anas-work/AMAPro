@@ -4,9 +4,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardBackgroundColor="#0F172A"
-    app:cardCornerRadius="16dp"
-    app:strokeColor="#334155"
+    app:cardBackgroundColor="@color/bg_secondary"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="24dp"
+    app:strokeColor="@color/border_color"
     app:strokeWidth="1.5dp">
 
     <LinearLayout
@@ -15,6 +16,7 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -25,9 +27,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Biometric Verification Detail"
-                android:textColor="#F8FAFC"
-                android:textSize="16sp"
+                android:text="Verification Detail"
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
                 android:textStyle="bold" />
 
             <ImageButton
@@ -35,43 +37,47 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
-                app:tint="#94A3B8" />
+                android:src="@drawable/ic_close_corp"
+                android:contentDescription="Close" />
         </LinearLayout>
 
+        <!-- Portraits Comparison Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:orientation="horizontal">
 
-            <!-- Enrolled Baseline -->
+            <!-- Enrolled Photo -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="6dp"
                 android:layout_weight="1"
-                android:background="#07090E"
+                android:background="@drawable/bg_glass_card"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="10dp">
+                android:padding="12dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Enrolled Baseline"
-                    android:textColor="#06B6D4"
+                    android:letterSpacing="0.04"
+                    android:text="Enrolled Photo"
+                    android:textColor="@color/accent_cyan"
                     android:textSize="11sp"
                     android:textStyle="bold" />
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/imgCompareEnrolled"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_marginTop="8dp"
+                    android:layout_width="104dp"
+                    android:layout_height="104dp"
+                    android:layout_marginTop="10dp"
                     android:scaleType="centerCrop"
                     android:src="@drawable/ic_launcher_foreground"
-                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium" />
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
+                    app:strokeColor="@color/border_subtle"
+                    app:strokeWidth="1.5dp" />
             </LinearLayout>
 
             <!-- Captured Edge Crop -->
@@ -80,59 +86,82 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                android:background="#07090E"
+                android:background="@drawable/bg_glass_card"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="10dp">
+                android:padding="12dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Captured Live Frame"
-                    android:textColor="#10B981"
+                    android:letterSpacing="0.04"
+                    android:text="Captured Photo"
+                    android:textColor="@color/accent_green"
                     android:textSize="11sp"
                     android:textStyle="bold" />
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/imgCompareCaptured"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_marginTop="8dp"
+                    android:layout_width="104dp"
+                    android:layout_height="104dp"
+                    android:layout_marginTop="10dp"
                     android:scaleType="centerCrop"
                     android:src="@drawable/ic_launcher_foreground"
-                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium" />
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
+                    app:strokeColor="@color/border_subtle"
+                    app:strokeWidth="1.5dp" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Details Info -->
-        <TextView
-            android:id="@+id/tvCompareName"
-            android:layout_width="wrap_content"
+        <!-- Personnel Details Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Employee: Anas Aziz (ABL107)"
-            android:textColor="#F8FAFC"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_glass_card"
+            android:orientation="vertical"
+            android:padding="14dp">
 
-        <TextView
-            android:id="@+id/tvCompareScore"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Cosine Similarity Score: 88.5% (High Confidence)"
-            android:textColor="#10B981"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvCompareName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Employee: Maulika Arekar (7388383)"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvCompareTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Timestamp: 2026-09-01 12:45:10"
-            android:textColor="#94A3B8"
-            android:textSize="12sp" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvCompareScore"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_pill_verified"
+                    android:paddingStart="10dp"
+                    android:paddingTop="3dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="3dp"
+                    android:text="Match Score: 94%"
+                    android:textColor="@color/accent_green"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvCompareTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Timestamp: 2026-09-10 01:30:15 PM"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
 
     </LinearLayout>
 

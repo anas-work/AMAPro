@@ -19,8 +19,8 @@ import kotlin.math.min
 
 class UltraLightDetector(
     context: Context,
-    val confThreshold: Float = 0.58f,
-    val nmsThreshold: Float = 0.25f
+    val confThreshold: Float = 0.70f,
+    val nmsThreshold: Float = 0.30f
 ) {
     val width = 320
     val height = 240
@@ -151,20 +151,11 @@ class UltraLightDetector(
 
                 val rawW = x2 - x1
                 val rawH = y2 - y1
+                val rawAspect = rawW / max(1f, rawH)
 
-                // Calibration: Increase height from top, reduce from bottom, expand width from both sides
-                val padX = rawW * 0.07f
-                val adjX1 = max(0f, x1 - padX)
-                val adjX2 = min(originalWidth.toFloat(), x2 + padX)
-                val adjY1 = max(0f, y1 - rawH * 0.08f) // Expand from top
-                val adjY2 = min(originalHeight.toFloat(), y2 - rawH * 0.08f) // Reduce from bottom
-
-                val finalW = adjX2 - adjX1
-                val finalH = adjY2 - adjY1
-                val finalAspect = finalW / max(1f, finalH)
-
-                if (finalW >= 30 && finalH >= 30 && finalAspect in 0.65f..1.45f) {
-                    detections.add(Detection(RectF(adjX1, adjY1, adjX2, adjY2), score))
+                // Enforce valid facial aspect ratio and minimum size
+                if (rawW >= 35 && rawH >= 35 && rawAspect in 0.65f..1.45f) {
+                    detections.add(Detection(RectF(x1, y1, x2, y2), score))
                 }
             }
         }

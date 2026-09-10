@@ -18,9 +18,9 @@ class IoUTracker(
             t.age++
             t.timeSinceUpdate++
             val speed = hypot(t.vx, t.vy)
-            if (t.timeSinceUpdate in 1..8 && speed >= 1.5f) {
-                val dx = t.vx * 0.5f
-                val dy = t.vy * 0.5f
+            if (t.timeSinceUpdate in 1..6 && speed >= 2.0f) {
+                val dx = t.vx * 0.4f
+                val dy = t.vy * 0.4f
                 t.bbox = RectF(
                     t.bbox.left + dx,
                     t.bbox.top + dy,
@@ -28,8 +28,8 @@ class IoUTracker(
                     t.bbox.bottom + dy
                 )
             }
-            t.vx *= 0.6f
-            t.vy *= 0.6f
+            t.vx *= 0.5f
+            t.vy *= 0.5f
         }
         return tracks.filter { it.timeSinceUpdate <= 15 }
     }
@@ -95,23 +95,33 @@ class IoUTracker(
 
             val smoothCx: Float
             val smoothCy: Float
-            if (centerShift < 3.5f) {
+            if (centerShift < 4.0f) {
+                // Dead-zone: Person is stationary, pin center to eliminate all micro-jitter
                 smoothCx = oldCx
                 smoothCy = oldCy
-                track.vx *= 0.5f
-                track.vy *= 0.5f
-            } else {
-                smoothCx = 0.35f * newCx + 0.65f * oldCx
-                smoothCy = 0.35f * newCy + 0.65f * oldCy
-                val instVx = (newCx - oldCx) * 0.30f
-                val instVy = (newCy - oldCy) * 0.30f
+                track.vx *= 0.3f
+                track.vy *= 0.3f
+            } else if (centerShift < 30.0f) {
+                // Smooth natural transition
+                smoothCx = 0.40f * newCx + 0.60f * oldCx
+                smoothCy = 0.40f * newCy + 0.60f * oldCy
+                val instVx = (newCx - oldCx) * 0.25f
+                val instVy = (newCy - oldCy) * 0.25f
                 track.vx = track.vx * 0.6f + instVx * 0.4f
                 track.vy = track.vy * 0.6f + instVy * 0.4f
+            } else {
+                // Fast movement: respond quickly without trailing behind
+                smoothCx = 0.75f * newCx + 0.25f * oldCx
+                smoothCy = 0.75f * newCy + 0.25f * oldCy
+                track.vx = (newCx - oldCx) * 0.4f
+                track.vy = (newCy - oldCy) * 0.4f
             }
 
-            // Heavy dimension stabilization (80% previous size, 20% new detection)
-            val smoothW = 0.20f * newW + 0.80f * oldW
-            val smoothH = 0.20f * newH + 0.80f * oldH
+            // Dimension stabilization: lock dimensions if variation is minor (<3.5px) to eliminate breathing
+            val wDiff = kotlin.math.abs(newW - oldW)
+            val hDiff = kotlin.math.abs(newH - oldH)
+            val smoothW = if (wDiff < 3.5f) oldW else (0.25f * newW + 0.75f * oldW)
+            val smoothH = if (hDiff < 3.5f) oldH else (0.25f * newH + 0.75f * oldH)
 
             track.bbox = RectF(
                 smoothCx - smoothW / 2f,

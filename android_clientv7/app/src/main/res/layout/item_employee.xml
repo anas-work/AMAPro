@@ -5,27 +5,27 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="#0F172A"
-    app:cardCornerRadius="8dp"
-    app:strokeColor="#334155"
+    app:cardBackgroundColor="@color/bg_card"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/border_color"
     app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp">
+        android:padding="12dp">
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imgEmpPhoto"
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_foreground"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-            app:strokeColor="#06B6D4"
+            app:strokeColor="@color/border_subtle"
             app:strokeWidth="1.5dp" />
 
         <TextView
@@ -37,7 +37,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="Employee Name"
-            android:textColor="#F8FAFC"
+            android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@+id/tvPresenceBadge"
@@ -52,8 +52,9 @@
             android:layout_marginTop="2dp"
             android:fontFamily="monospace"
             android:text="ABL1045"
-            android:textColor="#06B6D4"
-            android:textSize="12sp"
+            android:textColor="@color/accent_cyan"
+            android:textSize="11sp"
+            android:textStyle="bold"
             app:layout_constraintStart_toEndOf="@+id/imgEmpPhoto"
             app:layout_constraintTop_toBottomOf="@+id/tvEmpName" />
 
@@ -62,13 +63,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:paddingStart="8dp"
+            android:background="@drawable/bg_pill_verified"
+            android:paddingStart="10dp"
             android:paddingTop="3dp"
-            android:paddingEnd="8dp"
+            android:paddingEnd="10dp"
             android:paddingBottom="3dp"
             android:text="PRESENT"
-            android:textColor="#10B981"
-            android:textSize="10sp"
+            android:textColor="@color/accent_green"
+            android:textSize="9sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btnDelete"
@@ -76,14 +78,14 @@
 
         <ImageButton
             android:id="@+id/btnDelete"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_delete"
+            android:src="@drawable/ic_trash_corp"
+            android:contentDescription="Delete Employee"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="#EF4444" />
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

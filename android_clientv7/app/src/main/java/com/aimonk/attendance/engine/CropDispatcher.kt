@@ -14,11 +14,11 @@ import kotlin.math.min
 
 class CropDispatcher(
     private val apiService: ApiService,
-    private val minRecognitionSize: Float = 120f,
-    private val settleDelayMs: Long = 1000L,
-    private val samplingIntervalMs: Long = 600L,
+    private val minRecognitionSize: Float = 70f,
+    private val settleDelayMs: Long = 600L,
+    private val samplingIntervalMs: Long = 500L,
     private val maxAttempts: Int = 5,
-    private val totalEvaluationWindowMs: Long = 4000L,
+    private val totalEvaluationWindowMs: Long = 3500L,
     private val onMatch: (Track) -> Unit
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)

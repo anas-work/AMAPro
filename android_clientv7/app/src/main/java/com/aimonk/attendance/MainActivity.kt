@@ -4,12 +4,17 @@ import android.Manifest
 import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.Matrix
+import android.media.ExifInterface
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -23,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import coil.ImageLoader
 import coil.request.CachePolicy
 import android.hardware.camera2.CaptureRequest
+import android.util.Log
 import android.util.Range
 import android.view.Choreographer
 import androidx.camera.camera2.interop.Camera2Interop
@@ -44,12 +50,13 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
+    private val TAG = "MainActivity"
     private lateinit var binding: ActivityMainBinding
     private lateinit var detector: UltraLightDetector
     private val tracker = IoUTracker()
     private lateinit var dispatcher: CropDispatcher
     private lateinit var cameraExecutor: ExecutorService
-    val apiService = ApiService("https://amapro--amapro-attendance.modal.run")
+    val apiService = ApiService("https://aimonk-labs--amapro-attendance.modal.run")
 
     lateinit var imageLoader: ImageLoader
     private lateinit var feedAdapter: ActivityFeedAdapter
@@ -58,6 +65,28 @@ class MainActivity : AppCompatActivity() {
     private var isFeedPaused = false
     var currentSystemMode = "ENTRY"
     var latestCameraBitmap: Bitmap? = null
+
+    private var isCameraRunning = false
+    private var isCameraPaused = false
+    private var currentCameraSelector: CameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+    private var cameraProvider: ProcessCameraProvider? = null
+    private var lastKnownEnrolledCount = 1
+    private var onGalleryImagePickedCallback: ((Bitmap) -> Unit)? = null
+
+    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val bitmap = decodeUriToPortraitBitmap(uri)
+                if (bitmap != null) {
+                    onGalleryImagePickedCallback?.invoke(bitmap)
+                } else {
+                    Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this, "Error loading image: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     private var frameCounter = 0
     private var frameDecimationCounter = 0
@@ -146,18 +175,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (allPermissionsGranted()) {
-            startCamera()
-        } else {
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
-        }
+        // Initial camera state: Offline waiting for user initiation (BUG-006)
+        binding.cameraStartOverlay.visibility = View.VISIBLE
+        binding.layoutCameraLiveControls.visibility = View.GONE
+        binding.tvCameraLiveBadge.text = "OFFLINE"
+        binding.tvCameraLiveBadge.setTextColor(Color.parseColor("#64748B"))
 
         startRealtimePolling()
     }
 
     private fun setupRecyclerView() {
-        feedAdapter = ActivityFeedAdapter(imageLoader = imageLoader) { record ->
-            ComparisonDetailDialog(this, record, apiService).show()
+        feedAdapter = ActivityFeedAdapter(imageLoader = imageLoader, baseUrl = apiService.baseUrl) { record ->
+            ComparisonDetailDialog(this, record, apiService, imageLoader).show()
         }
         binding.rvActivityFeed.layoutManager = LinearLayoutManager(this)
         binding.rvActivityFeed.adapter = feedAdapter
@@ -172,6 +201,57 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupHeaderAndControls() {
+        // Start Device Camera Button (BUG-006)
+        binding.btnStartCamera.setOnClickListener {
+            if (allPermissionsGranted()) {
+                startCamera()
+            } else {
+                ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+            }
+        }
+
+        // Camera Flip Button (BUG-007)
+        binding.btnFlipCamera.setOnClickListener {
+            flipCamera()
+        }
+
+        // Camera Pause/Resume Button (BUG-006 & hardware switch-off)
+        binding.btnCameraPauseResume.setOnClickListener {
+            if (!isCameraRunning) return@setOnClickListener
+            isCameraPaused = !isCameraPaused
+            if (isCameraPaused) {
+                // 1. Capture and freeze last frame so video framing is paused cleanly
+                val frozenBmp = binding.previewView.bitmap
+                if (frozenBmp != null) {
+                    binding.imgPausedFrame.setImageBitmap(frozenBmp)
+                    binding.imgPausedFrame.visibility = View.VISIBLE
+                }
+                // 2. Shut off camera hardware completely by unbinding CameraX
+                try {
+                    cameraProvider?.unbindAll()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error unbinding camera on pause", e)
+                }
+                binding.btnCameraPauseResume.text = "Resume"
+                binding.btnCameraPauseResume.setIconResource(R.drawable.ic_camera_play_corp)
+                binding.tvCameraLiveBadge.text = "PAUSED"
+                binding.tvCameraLiveBadge.setTextColor(Color.parseColor("#F59E0B"))
+                tracker.clear()
+                binding.overlayView.clearPopup()
+                binding.overlayView.setTracks(emptyList(), cameraFrameWidth, cameraFrameHeight)
+                Toast.makeText(this, "Camera switched off & paused", Toast.LENGTH_SHORT).show()
+            } else {
+                // 3. Instantly resume camera stream and remove frozen frame
+                binding.imgPausedFrame.visibility = View.GONE
+                bindCameraUseCases()
+                binding.btnCameraPauseResume.text = "Pause"
+                binding.btnCameraPauseResume.setIconResource(R.drawable.ic_camera_pause_corp)
+                binding.tvCameraLiveBadge.text = "● LIVE"
+                binding.tvCameraLiveBadge.setTextColor(Color.parseColor("#EF4444"))
+                Toast.makeText(this, "Camera resumed", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         // Mode toggle
         binding.btnModeToggle.setOnClickListener {
             val nextMode = if (currentSystemMode == "ENTRY") "EXIT" else "ENTRY"
@@ -192,15 +272,22 @@ class MainActivity : AppCompatActivity() {
 
         // Enroll
         binding.btnOpenEnroll.setOnClickListener {
-            EnrollDialog(this, apiService,
+            EnrollDialog(
+                this,
+                apiService,
                 getCurrentCameraFrame = { latestCameraBitmap },
+                onFlipCamera = { flipCamera() },
+                onRequestGallery = { callback ->
+                    onGalleryImagePickedCallback = callback
+                    galleryLauncher.launch("image/*")
+                },
                 onEnrollSuccess = { refreshData() }
             ).show()
         }
 
         // Employee directory
         binding.btnOpenEmployees.setOnClickListener {
-            EmployeeDirectoryDialog(this, apiService) { refreshData() }.show()
+            EmployeeDirectoryDialog(this, apiService, imageLoader) { refreshData() }.show()
         }
 
         // Stop/Resume feed
@@ -218,28 +305,42 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Flush feed
+            // Flush feed with executive glass dialog
         binding.btnFlushFeed.setOnClickListener {
-            AlertDialog.Builder(this)
-                .setTitle("Flush Live Feed?")
-                .setMessage("This clears all in-memory attendance events and resets live presence counters.")
-                .setPositiveButton("Flush Now") { _, _ ->
-                    lifecycleScope.launch {
-                        try {
-                            apiService.flushAttendance()
-                            allFeedRecords = emptyList()
-                            feedAdapter.updateData(emptyList())
-                            tracker.clear()
-                            binding.overlayView.clearPopup()
-                            refreshData()
-                            Toast.makeText(this@MainActivity, "Feed flushed", Toast.LENGTH_SHORT).show()
-                        } catch (e: Exception) {
-                            Toast.makeText(this@MainActivity, "Flush error: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
+            val dialog = android.app.Dialog(this)
+            dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+            val confirmBinding = com.aimonk.attendance.databinding.DialogConfirmBinding.inflate(layoutInflater)
+            dialog.setContentView(confirmBinding.root)
+            dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+            dialog.window?.attributes?.windowAnimations = R.style.DialogAnimation_Executive
+            dialog.window?.setLayout(
+                (resources.displayMetrics.widthPixels * 0.88).toInt(),
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+
+            confirmBinding.btnConfirmCancel.setOnClickListener {
+                dialog.dismiss()
+            }
+
+            confirmBinding.btnConfirmAction.setOnClickListener {
+                dialog.dismiss()
+                lifecycleScope.launch {
+                    try {
+                        apiService.flushAttendance()
+                        allFeedRecords = emptyList()
+                        feedAdapter.updateData(emptyList())
+                        tracker.clear()
+                        binding.overlayView.clearPopup()
+                        binding.tvPresentCount.text = "0"
+                        binding.tvAbsentCount.text = maxOf(1, lastKnownEnrolledCount).toString()
+                        refreshData()
+                        Toast.makeText(this@MainActivity, "Feed flushed", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(this@MainActivity, "Flush error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
-                .setNegativeButton("Cancel", null)
-                .show()
+            }
+            dialog.show()
         }
     }
 
@@ -265,7 +366,7 @@ class MainActivity : AppCompatActivity() {
                 tabs.forEach { (b, k) ->
                     if (k == activeFilter) {
                         b.setBackgroundColor(Color.parseColor("#10B981"))
-                        b.setTextColor(Color.WHITE)
+                        b.setTextColor(Color.parseColor("#0F172A"))
                     } else {
                         b.setBackgroundColor(Color.TRANSPARENT)
                         b.setTextColor(Color.parseColor("#94A3B8"))
@@ -300,8 +401,18 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val status = apiService.fetchStatus()
+                if (status.totalEnrolled > 0) {
+                    lastKnownEnrolledCount = status.totalEnrolled
+                }
+                val totalEnrolled = maxOf(status.totalEnrolled, lastKnownEnrolledCount)
+                val effectiveAbsent = if (totalEnrolled > 0) {
+                    maxOf(status.absentCount, maxOf(0, totalEnrolled - status.presentCount))
+                } else {
+                    status.absentCount
+                }
+
                 binding.tvPresentCount.text = status.presentCount.toString()
-                binding.tvAbsentCount.text = status.absentCount.toString()
+                binding.tvAbsentCount.text = effectiveAbsent.toString()
                 binding.tvUnknownCount.text = status.unknownCount.toString()
 
                 // Sync mode if changed from another client
@@ -323,77 +434,172 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun flipCamera() {
+        currentCameraSelector = if (currentCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) {
+            CameraSelector.DEFAULT_BACK_CAMERA
+        } else {
+            CameraSelector.DEFAULT_FRONT_CAMERA
+        }
+        tracker.clear()
+        binding.overlayView.clearPopup()
+        binding.overlayView.setTracks(emptyList(), cameraFrameWidth, cameraFrameHeight)
+        if (isCameraRunning && !isCameraPaused) {
+            bindCameraUseCases()
+        }
+        val lensName = if (currentCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) "Front" else "Rear"
+        Toast.makeText(this, "Switched to $lensName Camera", Toast.LENGTH_SHORT).show()
+    }
+
     @androidx.annotation.OptIn(ExperimentalCamera2Interop::class)
-    private fun startCamera() {
+    fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
+            cameraProvider = cameraProviderFuture.get()
+            isCameraRunning = true
+            isCameraPaused = false
 
-            // 1. Preview configured with Camera2 high-speed target FPS
-            val preview = Preview.Builder().also { builder ->
-                Camera2Interop.Extender(builder).setCaptureRequestOption(
+            binding.imgPausedFrame.visibility = View.GONE
+            binding.cameraStartOverlay.visibility = View.GONE
+            binding.layoutCameraLiveControls.visibility = View.VISIBLE
+            binding.tvCameraLiveBadge.text = "● LIVE"
+            binding.tvCameraLiveBadge.setTextColor(Color.parseColor("#EF4444"))
+            binding.btnCameraPauseResume.text = "Pause"
+            binding.btnCameraPauseResume.setIconResource(R.drawable.ic_camera_pause_corp)
+
+            bindCameraUseCases()
+        }, ContextCompat.getMainExecutor(this))
+    }
+
+    @androidx.annotation.OptIn(ExperimentalCamera2Interop::class)
+    private fun bindCameraUseCases() {
+        val provider = cameraProvider ?: return
+
+        // 1. Preview configured with Camera2 high-speed target FPS and auto white balance (BUG-003)
+        val preview = Preview.Builder().also { builder ->
+            Camera2Interop.Extender(builder)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                .setCaptureRequestOption(
                     CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
                     Range(30, 60)
                 )
-            }.build().also {
-                it.setSurfaceProvider(binding.previewView.surfaceProvider)
-            }
+        }.build().also {
+            it.setSurfaceProvider(binding.previewView.surfaceProvider)
+        }
 
-            // 2. ImageAnalysis configured with Camera2 high-speed target FPS and optimized 640x480 resolution
-            val imageAnalysis = ImageAnalysis.Builder()
-                .setTargetResolution(android.util.Size(640, 480))
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .also { builder ->
-                    Camera2Interop.Extender(builder).setCaptureRequestOption(
+        // 2. ImageAnalysis configured with Camera2 high-speed target FPS and optimized 640x480 resolution
+        val imageAnalysis = ImageAnalysis.Builder()
+            .setTargetResolution(android.util.Size(640, 480))
+            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .also { builder ->
+                Camera2Interop.Extender(builder)
+                    .setCaptureRequestOption(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO)
+                    .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO)
+                    .setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON)
+                    .setCaptureRequestOption(
                         CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
                         Range(30, 60)
                     )
-                }
-                .build()
+            }
+            .build()
 
-            imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
-                val tStart = System.currentTimeMillis()
-                cameraFrameWidth = imageProxy.width
-                cameraFrameHeight = imageProxy.height
+        imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
+            val tStart = System.currentTimeMillis()
 
-                if (!isAnalysisBusy) {
-                    // 1/3 Temporal Decimation - evaluate BEFORE heavy Bitmap allocation & YUV conversion
-                    frameDecimationCounter = (frameDecimationCounter + 1) % 3
-                    val isRealKeyframe = (frameDecimationCounter == 0)
-
-                    if (isRealKeyframe) {
-                        isAnalysisBusy = true
-                        val bitmap: Bitmap? = runCatching { imageProxy.toBitmap() }.getOrNull()
-
-                        if (bitmap != null) {
-                            latestCameraBitmap = bitmap
-
-                            val tDetStart = System.currentTimeMillis()
-                            val dets = detector.detect(bitmap, imageProxy.width, imageProxy.height)
-                            binding.overlayView.telemetry.detectMs = (System.currentTimeMillis() - tDetStart).toFloat()
-
-                            val tTrackStart = System.currentTimeMillis()
-                            val activeTracks = tracker.update(dets)
-                            binding.overlayView.telemetry.trackMs = (System.currentTimeMillis() - tTrackStart).toFloat()
-
-                            dispatcher.evaluateAndDispatch(bitmap, activeTracks, currentSystemMode)
-                            binding.overlayView.telemetry.e2eMs = (System.currentTimeMillis() - tStart).toFloat()
-                        }
-                        isAnalysisBusy = false
-                    }
-                }
+            if (isCameraPaused || !isCameraRunning) {
                 imageProxy.close()
+                return@setAnalyzer
             }
 
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_FRONT_CAMERA, preview, imageAnalysis)
-            } catch (exc: Exception) {
-                Toast.makeText(this, "Camera error: ${exc.message}", Toast.LENGTH_LONG).show()
-            }
+            if (!isAnalysisBusy) {
+                // 1/3 Temporal Decimation - evaluate BEFORE heavy Bitmap allocation & YUV conversion
+                frameDecimationCounter = (frameDecimationCounter + 1) % 3
+                val isRealKeyframe = (frameDecimationCounter == 0)
 
-        }, ContextCompat.getMainExecutor(this))
+                if (isRealKeyframe) {
+                    isAnalysisBusy = true
+                    val rawBitmap: Bitmap? = runCatching { imageProxy.toBitmap() }.getOrNull()
+
+                    if (rawBitmap != null) {
+                        val isFront = (currentCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA)
+                        val orientedBitmap = orientBitmap(rawBitmap, imageProxy.imageInfo.rotationDegrees, isFront)
+
+                        latestCameraBitmap = orientedBitmap
+                        cameraFrameWidth = orientedBitmap.width
+                        cameraFrameHeight = orientedBitmap.height
+
+                        val tDetStart = System.currentTimeMillis()
+                        val dets = detector.detect(orientedBitmap, orientedBitmap.width, orientedBitmap.height)
+                        binding.overlayView.telemetry.detectMs = (System.currentTimeMillis() - tDetStart).toFloat()
+
+                        val tTrackStart = System.currentTimeMillis()
+                        val activeTracks = tracker.update(dets)
+                        binding.overlayView.telemetry.trackMs = (System.currentTimeMillis() - tTrackStart).toFloat()
+
+                        dispatcher.evaluateAndDispatch(orientedBitmap, activeTracks, currentSystemMode)
+                        binding.overlayView.telemetry.e2eMs = (System.currentTimeMillis() - tStart).toFloat()
+                    }
+                    isAnalysisBusy = false
+                }
+            }
+            imageProxy.close()
+        }
+
+        try {
+            provider.unbindAll()
+            provider.bindToLifecycle(this, currentCameraSelector, preview, imageAnalysis)
+        } catch (exc: Exception) {
+            Toast.makeText(this, "Camera error: ${exc.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun orientBitmap(raw: Bitmap, rotationDegrees: Int, isFront: Boolean): Bitmap {
+        if (rotationDegrees == 0 && !isFront) return raw
+        val matrix = Matrix().apply {
+            if (rotationDegrees != 0) {
+                postRotate(rotationDegrees.toFloat())
+            }
+            if (isFront) {
+                postScale(-1f, 1f) // Mirror horizontally matching front preview
+            }
+        }
+        return Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, matrix, true)
+    }
+
+    private fun decodeUriToPortraitBitmap(uri: Uri): Bitmap? {
+        val inputStream = contentResolver.openInputStream(uri) ?: return null
+        val rawBitmap = BitmapFactory.decodeStream(inputStream)
+        inputStream.close()
+        if (rawBitmap == null) return null
+
+        var rotation = 0
+        try {
+            contentResolver.openInputStream(uri)?.use { stream ->
+                val exif = ExifInterface(stream)
+                val orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+                rotation = when (orientation) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                    ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                    ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                    else -> 0
+                }
+            }
+        } catch (e: Exception) {
+            // Fallback: 0
+        }
+
+        return if (rotation != 0) {
+            val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
+            Bitmap.createBitmap(rawBitmap, 0, 0, rawBitmap.width, rawBitmap.height, matrix, true)
+        } else {
+            rawBitmap
+        }
     }
 
     override fun onResume() {
@@ -417,10 +623,10 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) startCamera()
-            else {
-                Toast.makeText(this, "Camera permission is required.", Toast.LENGTH_LONG).show()
-                finish()
+            if (allPermissionsGranted()) {
+                startCamera()
+            } else {
+                Toast.makeText(this, "Camera permission is required to start live recognition.", Toast.LENGTH_LONG).show()
             }
         }
     }
